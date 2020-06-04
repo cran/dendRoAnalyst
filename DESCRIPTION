@@ -1,0 +1,28 @@
+Package: dendRoAnalyst
+Type: Package
+Date: 2020-05-27
+Title: A Complete Tool for Processing and Analyzing Dendrometer Data
+Version: 0.1.0
+Authors@R: c(
+    person("Sugam", "Aryal", email = "sugam.aryal@fau.de", role = c("aut", "cre", "dtc")),
+    person("Martin", "Häusser", email = "martin.haeusser@fau.de", role = "aut"),
+    person("Jussi", "Grießinger", email = "jussi.griessinger@fau.de", role = "aut"),
+    person("Ze-Xin", "Fan", email = "fanzexin@xtbg.org.cn", role = "aut"),
+    person("Achim", "Bräuning", email = "achim.braeuning@fau.de", role = c("aut", "dgs")))
+Maintainer: Sugam Aryal <sugam.aryal@fau.de>
+Description: There are various functions for managing and cleaning data before the application of different approaches. This includes identifying and erasing sudden jumps in dendrometer data not related to environmental change, identifying the time gaps of recordings, and changing the temporal resolution of data to different frequencies. Furthermore, the package calculates daily statistics of dendrometer data, including the daily amplitude of tree growth. Various approaches can be applied to separate radial growth from daily cyclic shrinkage and expansion due to uptake and loss of stem water. In addition, it identifies periods of consecutive days with user-defined climatic conditions in daily meteorological data, then check what trees are doing during that period. 
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
+Depends: R (>= 2.10), boot, pspline, zoo, graphics, grDevices, stats,
+        base
+NeedsCompilation: no
+Packaged: 2020-06-03 17:44:41 UTC; local-admin
+Author: Sugam Aryal [aut, cre, dtc],
+  Martin Häusser [aut],
+  Jussi Grießinger [aut],
+  Ze-Xin Fan [aut],
+  Achim Bräuning [aut, dgs]
+Repository: CRAN
+Date/Publication: 2020-06-04 11:10:06 UTC
