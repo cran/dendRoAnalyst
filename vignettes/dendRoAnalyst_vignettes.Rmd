@@ -1,0 +1,83 @@
+---
+title: "Importing and formatting dataset for 'dendRoAnalyst' package"
+#author: "Sugam Aryal"
+#date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Importing and formatting dataset for 'dendRoAnalyst' package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+## Package description
+This package offers various functions for managing and cleaning data before the application of different approaches. This includes identifying and erasing sudden jumps in dendrometer data not related to environmental change, identifying the time gaps of recordings, and changing the temporal resolution of data to different frequencies. It offers an opportunity for users to use all major approaches in the current state of the art of dendrometer data analysis. In addition, it identifies periods of consecutive days with user-defined climatic conditions in daily meteorological data, then checks how trees responded during that period.
+
+## Data formatting
+
+The package requires a well formatted dataset as a input. The first column must consist of time in extended date-time format (e.g. yyyy-mm-dd HH:MM:SS) without daylight savings. The dendrometer data for each sensors has to be sorted from the second column onward. The package is flexible to column names but is strict with their order. 
+
+## Data import
+Various dendrometers store data in different formats. Some of them generates time in extended date-time format in one column whereas others generate time with different units in different columns. We recommend converting the data to comma separated value (.csv) or plain text (.txt) format before importing to R.
+
+### Importing dataset containing date-time in one column
+If the dataset looks like in the table 1, one can simply read it using either read.csv() or read.table() functions based on the file format.
+
+
+**Table 1: Dendrometer data with extended date-time in one column**
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(dendRoAnalyst::nepa, 5))
+```
+For comma separated value (.csv) format:
+
+    df <- read.csv("nepa.csv", header = TRUE)
+
+For plain text (.txt) format:
+
+    df <- read.table("nepa.txt", sep = "\t", header = TRUE)
+    
+
+### Importing a dataset with date and time in separate columns
+If a dataset does not include time in extended date-time format, but separate columns for year, month, day, hour, minute and second (Table 2), it needs additional format after importing to R. 
+
+**Table 2: Dendrometer data with extended date-time in separate columns**
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(dendRoAnalyst::nepa2,5))
+```
+For comma separated value (.csv) format:
+
+    df <- read.csv("nepa2.csv", header = TRUE)
+    date <- paste(df$year,sprintf('%02d',df$month),sprintf('%02d',df$day), sep="-")
+    time <- paste(sprintf('%02d',df$hours), sprintf('%02d',df$minutes), sprintf('%02d',df$seconds), sep=":")
+    datetime <- paste(date, time, sep = " ")
+    df2 <- data.frame("Time" = datetime)
+    df2$T2 <- df$T2
+    df2$T3 <- df$T3
+
+For plain text (.txt) format:
+
+    df <- read.table("nepa2.txt", header = TRUE)
+    date <- paste(df$year,sprintf('%02d',df$month),sprintf('%02d',df$day), sep="-")
+    time <- paste(sprintf('%02d',df$hours), sprintf('%02d',df$minutes), sprintf('%02d',df$seconds), sep=":")
+    datetime <- paste(date, time, sep = " ")
+    df2 <- data.frame("Time" = datetime)
+    df2$T2 <- df$T2
+    df2$T3 <- df$T3
+
+After the formatting, the final dataset must appear similar like in table 3.
+
+**Table 3: Dendrometer data after formatting extended date-time in one column**
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(dendRoAnalyst::nepa, 5))
+```
+
+-----------------------------------------------------------------------------------------------------------
+**Sugam Aryal**
+
+Email: <sugam.aryal@fau.de>
+

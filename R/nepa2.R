@@ -1,0 +1,14 @@
+#' @title Dendrometer data from Kathmandu version 2
+#' @description Dendrometer data from three Chir pine trees collected in hourly resolution for 2 years with separated time.
+#' @format A data frame with 14534 rows and 8 variables:
+#' \describe{
+#'   \item{\code{year}}{numeric year of data recording}
+#'   \item{\code{month}}{numeric months of data recording}
+#'   \item{\code{day}}{numeric days of data recording}
+#'   \item{\code{hours}}{numeric hours of data recording}
+#'   \item{\code{minutes}}{numeric minutes of data recording}
+#'   \item{\code{seconds}}{numeric seconds of data recording}
+#'   \item{\code{T2}}{double reading for first tree}
+#'   \item{\code{T3}}{double reading for second tree}
+#'}
+"nepa2"

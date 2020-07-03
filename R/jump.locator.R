@@ -39,6 +39,7 @@ jump.locator<-function(df, TreeNum, v){
   j.loc<-which(y_d2>=ju|y_d2<= -ju)
   if(length(j.loc)==0){
     print('There is no jump in your dendrometer data.')
+    return(temp)
   }else{
     #par(xpd=F)
     plot(x,y, type='l',main = 'Data with all jump(s)', xlab = '',ylab = 'Increment (mm)',xaxt = 'n')

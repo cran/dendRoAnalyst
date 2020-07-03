@@ -68,15 +68,15 @@ A list of two dataframes. The first dataframe \emph{ZG_cycle} contains the cycli
 \strong{Columns}\tab\tab   \strong{Description}\cr
 \code{DOY}\tab\tab	Day of year for the corresponding phase.\cr
 \code{Phase}\tab\tab	TWD for tree water deficit and GRO for irreversible expansion.\cr
-\code{start}\tab\tab	The time when the corresponding phase starts.\cr
-\code{end}\tab\tab	The time when the corresponding phase ends.\cr
+\code{start}\tab\tab	Time when the corresponding phase starts.\cr
+\code{end}\tab\tab	Time when the corresponding phase ends.\cr
 \code{Duration_h}\tab\tab	Duration of the corresponding phase in hours.\cr
-\code{Magnitude}\tab\tab	The radial/circumferential change during the corresponding ‘GRO’ phase in millimeters.\cr
-\code{rate}\tab\tab	The rate of radial/circumferential change during the corresponding ‘GRO’ phase measured in micrometers per hour.\cr
-\code{Max.twd}\tab\tab	The maximum TWD recorded for the corresponding TWD phase.\cr
-\code{Max.twd.time}\tab\tab	The time of occurrence of maximum TWD value for each corresponding TWD phase.\cr
+\code{Magnitude}\tab\tab	Radial/circumferential change in millimeters.\cr
+\code{rate}\tab\tab	Rate of Radial/circumferential change in micrometers per hour.\cr
+\code{Max.twd}\tab\tab	Maximum TWD recorded for the corresponding TWD phase.\cr
+\code{Max.twd.time}\tab\tab	Time of occurrence of maximum TWD value for each TWD phase.\cr
 \code{Avg.twd}\tab\tab	Average of TWD values for each TWD phase.\cr
-\code{STD.twd}\tab\tab	The standard deviation of TWD values for each TWD phase.
+\code{STD.twd}\tab\tab	Standard deviation of TWD values for each TWD phase.
 }
 }
 \description{

@@ -53,12 +53,12 @@ The contents of \emph{SC_cycle} are:
 \tabular{llll}{
 \strong{Columns}\tab\tab   \strong{Description}\cr
 \code{Phase}\tab\tab	Cyclic phases. 1, 2, and 3 for Shrinkage, Expansion, and Increment respectively.\cr
-\code{start}\tab\tab	The time when the corresponding phase starts.\cr
-\code{end}\tab\tab	The time when the corresponding phase ends.\cr
+\code{start}\tab\tab	Time when the corresponding phase starts.\cr
+\code{end}\tab\tab	Time when the corresponding phase ends.\cr
 \code{Duration_h}\tab\tab	Duration of the corresponding phase in hours.\cr
 \code{Duration_m}\tab\tab	Duration of the corresponding phase in minutes.\cr
-\code{Magnitude}\tab\tab	The radial/circumferential change during the corresponding phase in millimeters.\cr
-\code{rate}\tab\tab	The rate of radial/circumferential change during the corresponding phase measured in micrometers per hour.\cr
+\code{Magnitude}\tab\tab	Radial/circumferential change during the corresponding phase in millimeters.\cr
+\code{rate}\tab\tab	Rate of Radial/circumferential change in micrometers per hour.\cr
 \code{DOY}\tab\tab	Day of year for the corresponding phase.
 }
 }

@@ -160,7 +160,7 @@ clim.twd <- function(df,Clim,dailyValue='max',thresholdClim=0,thresholdDays=2,no
     opar <- par(no.readonly =TRUE)
     on.exit(par(opar))
     par(mar=c(5,6,8,8), xpd=T)
-    plot(1,1, xlim = c(1,x_mx),ylim = c(y_mn,y_mx), col='white', xlab = 'Consecutive days', ylab = ifelse(isTRUE(norm),'Normalized relative circumference change','Relative circumference change (mm)'), cex.axis=1.25, cex.lab=1.5, xaxt='n')
+    plot(1,1, xlim = c(1,x_mx),ylim = c(y_mn,y_mx), col='white', xlab = 'Consecutive days', ylab = ifelse(isTRUE(norm),'Normalized relative growth variation (mm)','Relative growth variation (mm)'), cex.axis=1.25, cex.lab=1.5, xaxt='n')
     for(k in 1:length(perd)){
       df3<-subset(d2, d2$period_id==perd[k])
       if(isTRUE(ncol(df)<=2)){
