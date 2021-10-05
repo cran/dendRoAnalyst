@@ -63,7 +63,7 @@ The contents of \emph{SC_cycle} are:
 }
 }
 \description{
-This function analyses the dendrometer data using Stem-cycle approach ( \href{https://doi.org/10.1007/PL00009752}{Downs et al. 1999}; \href{https://doi.org/10.1016/j.dendro.2011.01.008}{Deslauriers et al. 2011} ). A function that defines three phases: 1) Shrinkage, when the dendrometer reading is less than previous reading, 2) Expansion, when current reading is more than previous reading and 3) Increment, when current reading is higher than the previous maximum. Additionally, it calculates various statistics for each phase.
+This function analyses the dendrometer data using Stem-cycle approach (Downs et al. 1999; Deslauriers et al. 2011). A function that defines three phases: 1) Shrinkage, when the dendrometer reading is less than previous reading, 2) Expansion, when current reading is more than previous reading and 3) Increment, when current reading is higher than the previous maximum. Additionally, it calculates various statistics for each phase.
 }
 \examples{
 library(dendRoAnalyst)
@@ -74,7 +74,7 @@ head(sc.phase[[2]],10)
 
 }
 \references{
-Deslauriers A, Rossi S, Turcotte A, Morin H, Krause C (2011) A three-step procedure in SAS to analyze the time series from automatic dendrometers. Dendrochronologia 29:151–161. https://doi.org/10.1016/j.dendro.2011.01.008
+Deslauriers A, Rossi S, Turcotte A, Morin H, Krause C (2011) A three-step procedure in SAS to analyze the time series from automatic dendrometers. Dendrochronologia 29:151–161. \doi{10.1016/j.dendro.2011.01.008}
 
-Downes G, Beadle C, Worledge D (1999) Daily stem growth patterns in irrigated Eucalyptus globulus and E. nitens in relation to climate. Trees 14:102–111. https://doi.org/10.1007/PL00009752
+Downes G, Beadle C, Worledge D (1999) Daily stem growth patterns in irrigated Eucalyptus globulus and E. nitens in relation to climate. Trees 14:102–111. \doi{10.1007/PL00009752}
 }

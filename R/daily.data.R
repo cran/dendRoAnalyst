@@ -1,8 +1,8 @@
 #' @title Calculation of daily statistics for dendrometer data
 #'
-#' @description This function calculates various statistics of dendrometer data on a daily basis. The daily statistics includes the daily maximum and minimum with their corresponding times and daily amplitude (difference between daily maximum and minimum). See \href{https://doi.org/10.1016/j.agrformet.2012.08.002}{King et al. (2013)} for details.
+#' @description This function calculates various statistics of dendrometer data on a daily basis. The daily statistics includes the daily maximum and minimum with their corresponding times and daily amplitude (difference between daily maximum and minimum). See King et al. (2013) for details.
 #'
-#' @references King G, Fonti P, Nievergelt D, Büntgen U, Frank D (2013) Climatic drivers of hourly to yearly tree radius variations along a 6°C natural warming gradient. Agricultural and Forest Meteorology 168:36–46. https://doi.org/10.1016/j.agrformet.2012.08.002
+#' @references King G, Fonti P, Nievergelt D, Büntgen U, Frank D (2013) Climatic drivers of hourly to yearly tree radius variations along a 6°C natural warming gradient. Agricultural and Forest Meteorology 168:36–46. \doi{10.1016/j.agrformet.2012.08.002}
 #'
 #' @param df dataframe with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS} and the dendrometer data in following columns.
 #'

@@ -33,7 +33,7 @@ clim.twd(
 A dataframe containing the respective periods, relative radial/circumference change for each tree, the ID for each period and their beginning and end.
 }
 \description{
-This function calculates the number and the location of climatically adverse periods within a climate time series. The user can define a duration and threshold of these conditions. The function also provides the relative radial/circumferencial change during each adverse period for the original or normalized data. See \href{https://doi.org/10.3389/fpls.2019.00342}{Raffelsbauer et al., (2019)} for more details.
+This function calculates the number and the location of climatically adverse periods within a climate time series. The user can define a duration and threshold of these conditions. The function also provides the relative radial/circumferencial change during each adverse period for the original or normalized data. See Raffelsbauer et al., (2019) for more details.
 }
 \examples{
 library(dendRoAnalyst)
@@ -46,5 +46,5 @@ head(relative_dry_growth,10)
 
 }
 \references{
-Raffelsbauer V, Spannl S, Peña K, Pucha-Cofrep D, Steppe K, Bräuning A (2019) Tree Circumference Changes and Species-Specific Growth Recovery After Extreme Dry Events in a Montane Rainforest in Southern Ecuador. Front Plant Sci 10:342. https://doi.org/10.3389/fpls.2019.00342
+Raffelsbauer V, Spannl S, Peña K, Pucha-Cofrep D, Steppe K, Bräuning A (2019) Tree Circumference Changes and Species-Specific Growth Recovery After Extreme Dry Events in a Montane Rainforest in Southern Ecuador. Front Plant Sci 10:342. \doi{10.3389/fpls.2019.00342}
 }

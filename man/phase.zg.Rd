@@ -80,7 +80,7 @@ A list of two dataframes. The first dataframe \emph{ZG_cycle} contains the cycli
 }
 }
 \description{
-This function analyses data using the zero-growth approach. Initially, it divides the data in two categories: 1) Tree water deficiency (TWD), i.e. the reversible shrinkage and expansion of the tree stem when the current reading is below the previous maximum and, 2) Increment (GRO), the irreversible expansion of the stem when the current reading is above the previous maximum. Then it calculates the TWD for each data point as the difference between the modelled "growth line" and the observed measurement. See \href{https://doi.org/10.1111/nph.13995}{Zweifel et. al.,(2016) } for details.
+This function analyses data using the zero-growth approach. Initially, it divides the data in two categories: 1) Tree water deficiency (TWD), i.e. the reversible shrinkage and expansion of the tree stem when the current reading is below the previous maximum and, 2) Increment (GRO), the irreversible expansion of the stem when the current reading is above the previous maximum. Then it calculates the TWD for each data point as the difference between the modelled "growth line" and the observed measurement. See Zweifel et. al.,(2016) for details.
 }
 \examples{
 library(dendRoAnalyst)
@@ -91,5 +91,5 @@ head(zg.phase[[2]],10)
 
 }
 \references{
-Zweifel R, Haeni M, Buchmann N, Eugster W (2016) Are trees able to grow in periods of stem shrinkage? New Phytol 211:839–849. https://doi.org/10.1111/nph.13995
+Zweifel R, Haeni M, Buchmann N, Eugster W (2016) Are trees able to grow in periods of stem shrinkage? New Phytol 211:839–849. \doi{10.1111/nph.13995}
 }
