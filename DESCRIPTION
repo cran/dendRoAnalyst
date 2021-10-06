@@ -2,7 +2,7 @@ Package: dendRoAnalyst
 Type: Package
 Date: 2021-10-05
 Title: A Tool for Processing and Analyzing Dendrometer Data
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: c(
     person("Sugam", "Aryal", email = "sugam.aryal@fau.de", role = c("aut", "cre", "dtc")),
     person("Martin", "Häusser", email = "martin.haeusser@fau.de", role = "aut"),
@@ -20,11 +20,11 @@ Depends: R (>= 2.10), boot, pspline, zoo, graphics, grDevices, stats,
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2021-10-05 11:51:39 UTC; local-admin
+Packaged: 2021-10-06 07:47:57 UTC; local-admin
 Author: Sugam Aryal [aut, cre, dtc],
   Martin Häusser [aut],
   Jussi Grießinger [aut],
   Ze-Xin Fan [aut],
   Achim Bräuning [aut, dgs]
 Repository: CRAN
-Date/Publication: 2021-10-05 12:10:02 UTC
+Date/Publication: 2021-10-06 16:30:05 UTC

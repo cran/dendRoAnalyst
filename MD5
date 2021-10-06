@@ -1,8 +1,8 @@
-c5f57115dab4cdf5d2bb75b2089c084b *DESCRIPTION
+421506adc66215bf78a7d2359cb9e493 *DESCRIPTION
 aab04dd91820226b3c13c1c21e0192ad *NAMESPACE
 ca29429a4b705b4b93455bee00799238 *R/clim.twd.R
 94853e25724f64195b80ff1ab3f219ef *R/daily.data.R
-e80b33dca9f820914ea6d7fbe74b897c *R/dendro.resample.R
+76750cc82bc04ecdd243ddf9b3bc8144 *R/dendro.resample.R
 6099635ea75e5b57e6085a1f1299c18b *R/dendro.truncate.R
 0ed8c2669186a06a57907256a742d259 *R/gf_nepa17.R
 d004a40c6f84641acdd8939766c5dfcf *R/jump.locator.R
@@ -12,10 +12,10 @@ c0bd5ec29246e981227a26407f0fe269 *R/nepa17.R
 a3a4ee8b7e7e2e44d2181cbca0d5bb96 *R/nepa2.R
 4e5f507d43129fd9b62214b4765780a4 *R/network.interpolation.R
 f237e21303c14ffab749071cd9191bd5 *R/phase.sc.R
-7ffc75313c324a3608b259cb77180454 *R/phase.zg.R
+1096399d6126134e2819b8f7a3a09fe8 *R/phase.zg.R
 dbfa09c041163e7ed69059094461b8a4 *R/spline.interpolation.R
 4cf4f1b1aee4a13c51c601aaf9f1e498 *R/twd.maxima.R
-675a685583c5de68904463ebb793576f *build/partial.rdb
+fd01451cb984a19ad21288752682cd7c *build/partial.rdb
 02d7f12f6ae7fa233f2adcdfc2179d6c *build/vignette.rds
 0f3830c7b6dd5f748645f23c9331bab4 *data/gf_nepa17.rda
 389ea9e6f9882447bdbbf047a5d8947d *data/ktm_rain17.rda
@@ -27,7 +27,7 @@ fe34e8d1182bfbc485de93f331e7d5db *inst/doc/dendRoAnalyst_vignettes.R
 42d3d71c73592c1230de103015716b8d *inst/doc/dendRoAnalyst_vignettes.html
 8d7279ce3c56e289502a0d603e383f3d *man/clim.twd.Rd
 0194b15c2f6eb784a99857a69bba87b1 *man/daily.data.Rd
-a28b2fcb1ac9de1a60982ee77a10ef75 *man/dendro.resample.Rd
+7cd902d612a63bef36e3800d923aff11 *man/dendro.resample.Rd
 932ce1a489ae748ac90b40b8c92ce834 *man/dendro.truncate.Rd
 9426e1e1c97028d29ca99cb1b12fce76 *man/gf_nepa17.Rd
 948d3189903beb36aba43f406cb21276 *man/jump.locator.Rd
@@ -37,7 +37,7 @@ c058c71afdc56cde9b3d6fdeb0208558 *man/nepa17.Rd
 1d4496d6f51685b71e8b912ea9a2fe82 *man/nepa2.Rd
 1766fb3fedb5454601d21b75c548f429 *man/network.interpolation.Rd
 6a2dbfe89895261e8c1d4d3337d58efb *man/phase.sc.Rd
-34559335bf61e824583315658f7afd1b *man/phase.zg.Rd
+4f89aa198688c403fa20314b2b3fdf20 *man/phase.zg.Rd
 df88a606d7957fd4b667b6e6665c52b6 *man/spline.interpolation.Rd
 8d526ecd203353778a93bedc800b0e58 *man/twd.maxima.Rd
 607d07f72740b12d031bca87a68503cb *vignettes/dendRoAnalyst_vignettes

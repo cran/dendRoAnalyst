@@ -1,4 +1,4 @@
-#' @title Resampling temporal resolution of dendrometer data
+#' @title Resampling temporal resolution of dendrometer  and climate data
 #'
 #' @description This function is designed to change the temporal resolution of data. Depending on the objective, the user can define either maximum, minimum, or mean values to resample data in hourly, daily, weekly or monthly frequency.
 #'
@@ -6,7 +6,7 @@
 #'
 #' @param by either \emph{H, D, W} or \emph{M} to resample data into hourly, daily, weekly or monthly resolution.
 #'
-#' @param value either \emph{max, min} or \emph{mean} for the resampling value.
+#' @param value either \emph{max, min}, \emph{mean} or \emph{sum} for the resampling value.
 #'
 #' @return Dataframe with resampled data.
 #'
@@ -45,8 +45,8 @@ dendro.resample<-function(df, by, value){
   if(by%in%c('D','W','M', 'H')==FALSE){
     stop("You must provide arguement 'by' with either 'H' for Hourly, 'D' for Daily,'W' for weekly or 'M' for monthly")
   }
-  if(value%in%c('max','min','mean')==FALSE){
-    stop("You must provide arguement 'value' with either 'max' for maximum,'min' for minimum or 'mean' for mean")
+  if(value%in%c('max','min','mean','sum')==FALSE){
+    stop("You must provide arguement 'value' with either 'max' for maximum,'min' for minimum, 'mean' for mean or 'sum' for sum.")
   }
 
   DOY1<-c()
@@ -90,6 +90,18 @@ dendro.resample<-function(df, by, value){
           time<-c(time,format(day$timestamp[1], '%Y-%m-%d'))
           #DOY<-c(DOY,i)
           a1<-apply(day[,2:ncol(data)], 2, mean, na.rm=T)
+          a<-rbind.data.frame(a,a1)
+        }
+        resamp<-data.frame(time,a)
+        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
+        #return(resamp)
+      }
+      if(value=='sum'){
+        for(i in min(year1$da):max(year1$da)){
+          day<-subset(year1, da==i)
+          time<-c(time,format(day$timestamp[1], '%Y-%m-%d'))
+          #DOY<-c(DOY,i)
+          a1<-apply(day[,2:ncol(data)], 2, sum, na.rm=T)
           a<-rbind.data.frame(a,a1)
         }
         resamp<-data.frame(time,a)
@@ -143,6 +155,18 @@ dendro.resample<-function(df, by, value){
         names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
         #return(resamp)
       }
+      if(value=='sum'){
+        for(i in min(year1$wk):max(year1$wk)){
+          week<-subset(year1, wk==i)
+          time<-c(time,format(week$timestamp[1], '%Y-%m-%d'))
+          #w<-c(w,i)
+          a1<-apply(week[,2:ncol(data)], 2, sum, na.rm=T)
+          a<-rbind.data.frame(a,a1)
+        }
+        resamp<-data.frame(time,a)
+        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
+        #return(resamp)
+      }
 
     }
 
@@ -182,6 +206,18 @@ dendro.resample<-function(df, by, value){
           time<-c(time,format(month$timestamp[1], '%Y-%m-%d'))
           #m<-c(m,i)
           a1<-apply(month[,2:ncol(data)], 2, mean, na.rm=T)
+          a<-rbind.data.frame(a,a1)
+        }
+        resamp<-data.frame(time,a)
+        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
+        #return(resamp)
+      }
+      if(value=='sum'){
+        for(i in min(year1$mn):max(year1$mn)){
+          month<-subset(year1, mn==i)
+          time<-c(time,format(month$timestamp[1], '%Y-%m-%d'))
+          #m<-c(m,i)
+          a1<-apply(month[,2:ncol(data)], 2, sum, na.rm=T)
           a<-rbind.data.frame(a,a1)
         }
         resamp<-data.frame(time,a)
@@ -234,6 +270,22 @@ dendro.resample<-function(df, by, value){
             ymdhms<-paste(hours$ymd[1],hms, sep =' ')
             time<-c(time,ymdhms)
             a1<-apply(hours[,2:ncol(data)], 2, mean, na.rm=T)
+            a<-rbind.data.frame(a,a1)
+          }
+        }
+        resamp<-data.frame(time,a)
+        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
+        #return(resamp)
+      }
+      if(value=='sum'){
+        for(i in min(year1$da):max(year1$da)){
+          day<-subset(year1, da==i)
+          for(h in unique(day$hr)){
+            hours<-subset(day, day$hr==h)
+            hms<-paste(h,':00:00', sep = '')
+            ymdhms<-paste(hours$ymd[1],hms, sep =' ')
+            time<-c(time,ymdhms)
+            a1<-apply(hours[,2:ncol(data)], 2, sum, na.rm=T)
             a<-rbind.data.frame(a,a1)
           }
         }

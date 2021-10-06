@@ -59,7 +59,7 @@
 #'
 #' @examples library(dendRoAnalyst)
 #' data(gf_nepa17)
-#' zg.phase<-phase.zg(df=gf_nepa17, TreeNum=1, outputplot=TRUE, days=c(150,160))
+#' zg.phase<-phase.zg(df=gf_nepa17[1:600,], TreeNum=1, outputplot=TRUE, days=c(2,6))
 #' head(zg.phase[[1]],10)
 #' head(zg.phase[[2]],10)
 #'
@@ -116,35 +116,28 @@ phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
     }
   }
   r.denro <- reso_den(temp)
-  y <- c()
-  for (i in 1:nrow(data)) {
-    if (isTRUE(data[, dm][i + 1] - data[, dm][i] > 0) ==
-        TRUE & isTRUE(max(data[, dm][1:i], na.rm = T) <
-                      data[, dm][i + 1]) == TRUE) {
-      y[i + 1] <- 3
-    }
-    else {
-      if (isTRUE(data[, dm][i + 1] - data[, dm][i] > 0) ==
-          TRUE) {
-        y[i + 1] <- 2
-      }
-      else {
-        y[i + 1] <- 1
-      }
+  ap.all <- c(data[, dm][1])
+  for (i in 2:nrow(data)) {
+    if(data[, dm][i] < max(data[,dm][1:i - 1])){
+      ap.all <- c(ap.all,max(data[, dm][1:i - 1]))
+    }else{
+      ap.all <- c(ap.all,data[, dm][i])
     }
   }
-  data$y <- y[1:length(y) - 1]
-  data$phs <- data$y
-  zg_ph <- data$y
-  zg_ph[zg_ph == 2 | zg_ph == 1] <- "TWD"
-  zg_ph[zg_ph == 3] <- "GRO"
+  data$twd <- data[, dm] - ap.all
+  data$strght.line <- ap.all
+  zg_ph <- ifelse(data$twd==0, "GRO","TWD")
+  # zg_ph[zg_ph == 2 | zg_ph == 1] <- "TWD"
+  # zg_ph[zg_ph == 3] <- "GRO"
   data$y <- zg_ph
   x <- which(data$y == "GRO")
   dp.3.time <- data[, dm][x]
   y.3 <- na.exclude(data[, dm][x])
   ap.all <- c(data[, dm][1])
-  for(i in 2:nrow(data)){
-    ap.all <- c(ap.all, ifelse(data[, dm][i]<max(data[, dm][1:i-1]),max(data[, dm][1:i-1]),data[, dm][i]))
+  for (i in 2:nrow(data)) {
+    ap.all <- c(ap.all, ifelse(data[, dm][i] < max(data[,
+                                                        dm][1:i - 1]), max(data[, dm][1:i - 1]), data[,
+                                                                                                      dm][i]))
   }
   data$twd <- data[, dm] - ap.all
   data$strght.line <- ap.all
@@ -195,40 +188,43 @@ phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
                     s.twd, md.twd)
   s <- subset(xyz, xyz$mn.twd != 0)
   abc <- data.frame(doy)
-  strt_time <- c()
+  strt_time <- c(strftime(data[1, 1], format = "%Y-%m-%d %H:%M:%S"))
   for (i in 1:nrow(abc)) {
-    strt_time[i] <- strftime(data[, 1][abc$doy[i]], format = "%Y-%m-%d %H:%M:%S")
+    strt_time <- c(strt_time,strftime(data[, 1][abc$doy[i]], format = "%Y-%m-%d %H:%M:%S"))
   }
+
+
   abc$doy <- NULL
   abc$DOY <- as.integer(format(strptime(strt_time, format = "%Y-%m-%d %H:%M:%S"),
-                               "%j"))
+                               "%j"))[1:nrow(abc)]
   abc$Phases <- gr.ph
   abc <- na.omit(abc)
   abc$start <- strt_time[1:length(strt_time) - 1]
   abc$end <- strt_time[2:(length(strt_time))]
   abc$Duration_h <- round(as.numeric(difftime(strptime(abc$end,
                                                        format = "%Y-%m-%d %H:%M:%S"), strptime(abc$start, format = "%Y-%m-%d %H:%M:%S"),
-                                              units = "hours")), 1)
-  abc$magnitude <- as.numeric(round(diff(magn), 8))
+                                              units = "hours")), 2)
+
+  abc$magnitude <- as.numeric(round(diff(c(data[, dm][1],magn)), 8))
   abc$rate <- (abc$magnitude/abc$Duration_h) * 1000
-  data$tm = data[, 1]
-  twd12 = data$twd
+  data$tm <- data[, 1]
+  twd12 <- data$twd
   tp <- abc$start[abc$Phases == "TWD"]
   ep <- abc$end[abc$Phases == "TWD"]
-  twd.loc = which(abc$Phases == "TWD")
-  max.t = c()
-  max.tm = c()
-  mn.t = c()
-  sd.t = c()
+  twd.loc <- which(abc$Phases == "TWD")
+  max.t <- c()
+  max.tm <- c()
+  mn.t <- c()
+  sd.t <- c()
   for (q in 1:length(tp)) {
-    r = as.numeric(which(data$tm == tp[q]))
-    t = as.numeric(which(data$tm == ep[q]))
-    f = data[r:t, ]
-    max.t = c(max.t, min(f$twd))
-    d = which(f$twd == min(f$twd))
-    max.tm = c(max.tm, strftime(f[, 1][d[length(d)]], format = "%Y-%m-%d %H:%M:%S"))
-    mn.t = c(mn.t, mean(f$twd, na.rm = T))
-    sd.t = c(sd.t, sd(f$twd, na.rm = T))
+    r <- as.numeric(which(data$tm == tp[q]))
+    t <- as.numeric(which(data$tm == ep[q]))
+    f <- data[r:t, ]
+    max.t <- c(max.t, min(f$twd))
+    d <- which(f$twd == min(f$twd))
+    max.tm <- c(max.tm, strftime(f[, 1][d[length(d)]], format = "%Y-%m-%d %H:%M:%S"))
+    mn.t <- c(mn.t, mean(f$twd, na.rm = T))
+    sd.t <- c(sd.t, sd(f$twd, na.rm = T))
   }
   abc$Max.twd <- NA
   abc$Max.twd[twd.loc] <- -max.t

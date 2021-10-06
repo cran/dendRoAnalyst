@@ -2,7 +2,7 @@
 % Please edit documentation in R/dendro.resample.R
 \name{dendro.resample}
 \alias{dendro.resample}
-\title{Resampling temporal resolution of dendrometer data}
+\title{Resampling temporal resolution of dendrometer  and climate data}
 \usage{
 dendro.resample(df, by, value)
 }
@@ -11,7 +11,7 @@ dendro.resample(df, by, value)
 
 \item{by}{either \emph{H, D, W} or \emph{M} to resample data into hourly, daily, weekly or monthly resolution.}
 
-\item{value}{either \emph{max, min} or \emph{mean} for the resampling value.}
+\item{value}{either \emph{max, min}, \emph{mean} or \emph{sum} for the resampling value.}
 }
 \value{
 Dataframe with resampled data.

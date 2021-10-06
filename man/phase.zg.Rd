@@ -85,7 +85,7 @@ This function analyses data using the zero-growth approach. Initially, it divide
 \examples{
 library(dendRoAnalyst)
 data(gf_nepa17)
-zg.phase<-phase.zg(df=gf_nepa17, TreeNum=1, outputplot=TRUE, days=c(150,160))
+zg.phase<-phase.zg(df=gf_nepa17[1:600,], TreeNum=1, outputplot=TRUE, days=c(2,6))
 head(zg.phase[[1]],10)
 head(zg.phase[[2]],10)
 
