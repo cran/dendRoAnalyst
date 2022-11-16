@@ -66,12 +66,12 @@ phase.sc<-function(df, TreeNum, smoothing=NULL, outputplot=FALSE, days, cols=c('
   data<-df
   #a<-NULL
   #b<-NULL
-  temp<-as.POSIXct(strptime(data[,1], "%Y-%m-%d %H:%M:%S"), tz='UTC')
-  if(is.na(as.POSIXct(temp[1], format = '%Y-%m-%d %H:%M:%S'))){
-    stop('Date not in the right format.')
+  temp<-data.frame(timestamp=as.POSIXct(data[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC'))
+  if(unique(is.na(as.POSIXct(temp$timestamp, format = '%Y-%m-%d %H:%M:%S')))){
+    stop('Date not in the right format')
   }
-  data$doy<-as.integer(format(strptime(temp, format = '%Y-%m-%d %H:%M:%S'), '%j'))
-  data$yr<-as.integer(format(strptime(temp, format = '%Y-%m-%d %H:%M:%S'), '%y'))
+  data$doy<-as.integer(format(as.POSIXct(temp[,1], format = '%Y-%m-%d %H:%M:%S'), '%j'))
+  data$yr<-as.integer(format(as.POSIXct(temp[,1], format = '%Y-%m-%d %H:%M:%S'), '%y'))
   y1<-unique(data$yr)
   if(length(y1)>1){
     data$doy2<-data$doy
@@ -103,7 +103,7 @@ phase.sc<-function(df, TreeNum, smoothing=NULL, outputplot=FALSE, days, cols=c('
   }
   #####################################################
   #########################
-  r.denro<-reso_den(temp)
+  r.denro<-reso_den(temp[,1])
   if(is.null(sf)==T){
     dm<-dm1
   }else{

@@ -52,10 +52,13 @@
 #' \code{Magnitude}\tab\tab	Radial/circumferential change in millimeters.\cr
 #' \code{rate}\tab\tab	Rate of Radial/circumferential change in micrometers per hour.\cr
 #' \code{Max.twd}\tab\tab	Maximum TWD recorded for the corresponding TWD phase.\cr
+#' \code{twd.severity}\tab\tab	The severity of the individual TWD period (see description below).\cr
 #' \code{Max.twd.time}\tab\tab	Time of occurrence of maximum TWD value for each TWD phase.\cr
 #' \code{Avg.twd}\tab\tab	Average of TWD values for each TWD phase.\cr
 #' \code{STD.twd}\tab\tab	Standard deviation of TWD values for each TWD phase.
 #' }
+#'
+#'@description The severity value of each TWD was introduced in version 0.1.4 of the package. This value is calculated as product of angle of depression of the TWD period and its duration in days.
 #'
 #' @examples library(dendRoAnalyst)
 #' data(gf_nepa17)
@@ -71,10 +74,10 @@
 #'
 #' @export
 phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
-                    twdCol = "#636363", twdFill = NULL, twdFillCol = "#f03b20",
-                    xlab = "DOY", ylab1 = "Stem size variation [mm]", ylab2 = "TWD [mm]",
-                    twdYlim = NULL, cex.axis = NULL, cex.lab = NULL, font.lab = NULL,
-                    col.lab = NULL, font.axis = NULL, col.axis = NULL)
+                     twdCol = "#636363", twdFill = NULL, twdFillCol = "#f03b20",
+                     xlab = "DOY", ylab1 = "Stem size variation [mm]", ylab2 = "TWD [mm]",
+                     twdYlim = NULL, cex.axis = NULL, cex.lab = NULL, font.lab = NULL,
+                     col.lab = NULL, font.axis = NULL, col.axis = NULL)
 {
   temp13 <- df
   dm <- TreeNum + 1
@@ -82,14 +85,13 @@ phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
   dm <- 2
   a <- NULL
   b <- NULL
-  temp <- as.POSIXct(strptime(data[, 1], "%Y-%m-%d %H:%M:%S"),
-                     tz = "UTC")
-  if (is.na(as.POSIXct(temp[1], format = "%Y-%m-%d %H:%M:%S"))) {
-    stop("Date not in the right format")
+  temp<-data.frame(timestamp=as.POSIXct(data[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC'))
+  if(unique(is.na(as.POSIXct(temp$timestamp, format = '%Y-%m-%d %H:%M:%S', tz='UTC')))){
+    stop('Date not in the right format')
   }
-  data$doy <- as.integer(format(strptime(temp, format = "%Y-%m-%d %H:%M:%S"),
+  data$doy <- as.integer(format(as.POSIXct(temp[,1], format = "%Y-%m-%d %H:%M:%S"),
                                 "%j"))
-  data$yr <- as.integer(format(strptime(temp, format = "%Y-%m-%d %H:%M:%S"),
+  data$yr <- as.integer(format(as.POSIXct(temp[,1], format = "%Y-%m-%d %H:%M:%S"),
                                "%y"))
   y1 <- unique(data$yr)
   if (length(y1) > 1) {
@@ -115,7 +117,7 @@ phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
       return(round(reso))
     }
   }
-  r.denro <- reso_den(temp)
+  r.denro <- reso_den(temp[,1])
   ap.all <- c(data[, dm][1])
   for (i in 2:nrow(data)) {
     if(data[, dm][i] < max(data[,dm][1:i - 1])){
@@ -170,9 +172,9 @@ phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
     s.twd1 <- c(s.twd1, sd(df$twd, na.rm = T))
     md.twd1 <- c(md.twd1, median(df$twd, na.rm = T))
     t.mn <- subset(df, df$twd == min(df$twd, na.rm = T))
-    d.min1 <- c(d.min1, strftime(t.mn[1, 1], format = "%Y-%m-%d %H:%M:%S"))
+    d.min1 <- c(d.min1, as.POSIXct(t.mn[1, 1], format = "%Y-%m-%d %H:%M:%S"))
     t.mx <- subset(df, df$twd == max(df$twd, na.rm = T))
-    d.max1 <- c(d.max1, strftime(t.mx[1, 1], format = "%Y-%m-%d %H:%M:%S"))
+    d.max1 <- c(d.max1, as.POSIXct(t.mx[1, 1], format = "%Y-%m-%d %H:%M:%S"))
   }
   df2 <- data[(x[length(x)] + 1):nrow(data), ]
   mx.twd <- c(mx.twd1, max(df2$twd, na.rm = T))
@@ -181,28 +183,28 @@ phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
   s.twd <- c(s.twd1, sd(df2$twd, na.rm = T))
   md.twd <- c(md.twd1, median(df2$twd, na.rm = T))
   t.mn <- subset(df2, df2$twd == min(df2$twd, na.rm = T))
-  d.min <- c(d.min1, strftime(t.mn[1, 1], format = "%Y-%m-%d %H:%M:%S"))
+  d.min <- c(d.min1, as.POSIXct(t.mn[1, 1], format = "%Y-%m-%d %H:%M:%S"))
   t.mx <- subset(df2, df2$twd == max(df2$twd, na.rm = T))
-  d.max <- c(d.max1, strftime(t.mx[1, 1], format = "%Y-%m-%d %H:%M:%S"))
+  d.max <- c(d.max1, as.POSIXct(t.mx[1, 1], format = "%Y-%m-%d %H:%M:%S"))
   xyz <- data.frame(d.max, mx.twd, d.min, mn.twd, avg.twd,
                     s.twd, md.twd)
   s <- subset(xyz, xyz$mn.twd != 0)
   abc <- data.frame(doy)
-  strt_time <- c(strftime(data[1, 1], format = "%Y-%m-%d %H:%M:%S"))
+  strt_time <- as.POSIXct(data[1, 1], format = "%Y-%m-%d %H:%M:%S")
   for (i in 1:nrow(abc)) {
-    strt_time <- c(strt_time,strftime(data[, 1][abc$doy[i]], format = "%Y-%m-%d %H:%M:%S"))
+    strt_time <- c(strt_time,as.POSIXct(data[, 1][abc$doy[i]], format = "%Y-%m-%d %H:%M:%S"))
   }
 
 
   abc$doy <- NULL
-  abc$DOY <- as.integer(format(strptime(strt_time, format = "%Y-%m-%d %H:%M:%S"),
+  abc$DOY <- as.integer(format(as.POSIXct(strt_time, format = "%Y-%m-%d %H:%M:%S"),
                                "%j"))[1:nrow(abc)]
   abc$Phases <- gr.ph
   abc <- na.omit(abc)
   abc$start <- strt_time[1:length(strt_time) - 1]
   abc$end <- strt_time[2:(length(strt_time))]
-  abc$Duration_h <- round(as.numeric(difftime(strptime(abc$end,
-                                                       format = "%Y-%m-%d %H:%M:%S"), strptime(abc$start, format = "%Y-%m-%d %H:%M:%S"),
+  abc$Duration_h <- round(as.numeric(difftime(as.POSIXct(abc$end,
+                                                         format = "%Y-%m-%d %H:%M:%S"), as.POSIXct(abc$start, format = "%Y-%m-%d %H:%M:%S"),
                                               units = "hours")), 2)
 
   abc$magnitude <- as.numeric(round(diff(c(data[, dm][1],magn)), 8))
@@ -222,14 +224,16 @@ phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
     f <- data[r:t, ]
     max.t <- c(max.t, min(f$twd))
     d <- which(f$twd == min(f$twd))
-    max.tm <- c(max.tm, strftime(f[, 1][d[length(d)]], format = "%Y-%m-%d %H:%M:%S"))
+    max.tm <- c(max.tm, format(as.POSIXct(f[, 1][d[length(d)]], format = "%Y-%m-%d %H:%M:%S", tz='UTC')))
     mn.t <- c(mn.t, mean(f$twd, na.rm = T))
     sd.t <- c(sd.t, sd(f$twd, na.rm = T))
   }
   abc$Max.twd <- NA
   abc$Max.twd[twd.loc] <- -max.t
+  abc$twd.severity<-NA
+  abc$twd.severity[twd.loc]<-atan(abc$Max.twd[twd.loc]/(abc$Duration_h[twd.loc]/24))*(180/pi)*(abc$Duration_h[twd.loc]/24)
   abc$Max.twd.time <- NA
-  abc$Max.twd.time[twd.loc] <- strftime(max.tm, format = "%Y-%m-%d %H:%M:%S")
+  abc$Max.twd.time[twd.loc] <- max.tm#as.POSIXct(max.tm, format = "%Y-%m-%d %H:%M:%S",tz='UTC')
   abc$Avg.twd <- NA
   abc$Avg.twd[twd.loc] <- -mn.t
   abc$STD.twd <- NA

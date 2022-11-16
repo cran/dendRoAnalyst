@@ -2,14 +2,12 @@
 % Please edit documentation in R/jump.locator.R
 \name{jump.locator}
 \alias{jump.locator}
-\title{Removing artefacts due to manual adjustments of dendrometers}
+\title{Removing artefacts due to manual adjustments of dendrometers automatically for more than one dendrometers}
 \usage{
-jump.locator(df, TreeNum, v)
+jump.locator(df, v)
 }
 \arguments{
 \item{df}{dataframe with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS} and the dendrometer data in following columns.}
-
-\item{TreeNum}{numerical value indicating the tree to be analysed. E.g. '1' refers to the first dendrometer data column in \emph{df}.}
 
 \item{v}{numerical value which is considered as artefact. E.g. \code{v}=1 implies that if the difference to the consecutive data point is more than 1 or less than -1, it will be considered as an artefact.}
 }
@@ -17,12 +15,12 @@ jump.locator(df, TreeNum, v)
 A dataframe containing jump-free dendrometer data.
 }
 \description{
-Dendrometers generally have limited memory capacity beyond which it stops recording. To keep the measurement ongoing, they should be adjusted periodically, which can cause positive or negative jumps in the data. This function locates these artefacts and interactively adjusts them one by one.
+Dendrometers generally have limited memory capacity beyond which it stops recording. To keep the measurement ongoing, they should be adjusted periodically, which can cause positive or negative jumps in the data. This function locates these artefacts and adjusts them.Unlike in \code{\link[dendRoAnalyst:i.jump.locator]{i.jump.locator}}, it can handle dataset with more than one dendrometers.
 }
 \examples{
 library(dendRoAnalyst)
 data(nepa)
-jump_free_nepa<-jump.locator(df=nepa, TreeNum=1 ,v=1)
+jump_free_nepa<-jump.locator(df=nepa ,v=1)
 head(jump_free_nepa,10)
 
 }

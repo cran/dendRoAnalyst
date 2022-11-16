@@ -23,7 +23,7 @@ This function is designed to change the temporal resolution of data. Depending o
 library(dendRoAnalyst)
 data(nepa17)
 # To resample monthly with maximum value
-resample_M<-dendro.resample(df=nepa17[,1:2], by='M', value='max')
+resample_M<-dendro.resample(df=gf_nepa17[,1:2], by='M', value='max')
 head(resample_M,10)
 
 }

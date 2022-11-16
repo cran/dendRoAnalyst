@@ -32,8 +32,8 @@ daily.data<-function(df, TreeNum){
   data<-df
   Year<-NULL
   days<-NULL
-  temp1<-data.frame(timestamp=as.POSIXct(strptime(data[,1], format = '%Y-%m-%d %H:%M:%S'), tz='UTC'))
-  if(is.na(as.POSIXct(temp1$timestamp[1], format = '%Y-%m-%d %H:%M:%S'))){
+  temp1<-data.frame(timestamp=as.POSIXct(data[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC'))
+  if(unique(is.na(as.POSIXct(temp1$timestamp, format = '%Y-%m-%d %H:%M:%S')))){
     stop('Date not in the right format')
   }
   temp1[,2]<-data[,(TreeNum+1)]

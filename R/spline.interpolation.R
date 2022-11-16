@@ -30,8 +30,8 @@ spline.interpolation<-function(df, resolution, fill=FALSE){
   names(dataset1)<-c('TIME',colnames(dataset)[2:ncol(dataset)])
   a1<-ncol(dataset)+1
   dataset2<-data.frame(dataset1, row.names = dataset1$TIME)
-  dataset2$time<-as.POSIXct(strptime(dataset1$TIME, "%Y-%m-%d %H:%M:%S"), tz='UTC')
-  if(is.na(as.POSIXct(dataset2$time[1], format = '%Y-%m-%d %H:%M:%S'))){
+  dataset2$time<-as.POSIXct(dataset1$TIME, "%Y-%m-%d %H:%M:%S", tz='UTC')
+  if(unique(is.na(as.POSIXct(dataset2$time[1], format = '%Y-%m-%d %H:%M:%S')))){
     stop('Date not in the right format')
   }
   #dataset2$time=dataset2[,1]
@@ -67,11 +67,11 @@ spline.interpolation<-function(df, resolution, fill=FALSE){
           f.sp<-zoo::na.spline(dataset[,i])
           dataset[f.loc,i]<-f.sp[f.loc]
         }
-        dataset[,1]<-as.POSIXct(strptime(dataset[,1], "%Y-%m-%d %H:%M:%S"), tz='UTC')
+        dataset[,1]<-format(as.POSIXct(dataset[,1], "%Y-%m-%d %H:%M:%S", tz='UTC'))
         message("Done!!!\n")
         return(dataset)
       }else{
-        dataset[,1]<-as.POSIXct(strptime(dataset[,1], "%Y-%m-%d %H:%M:%S"), tz='UTC')
+        dataset[,1]<-format(as.POSIXct(dataset[,1], "%Y-%m-%d %H:%M:%S", tz='UTC'))
         message("Done!!!\n")
         return(dataset)
       }
@@ -86,7 +86,7 @@ spline.interpolation<-function(df, resolution, fill=FALSE){
     x3<-seq(from = as.POSIXct(x1, tz = 'UTC'),to = as.POSIXct(x2, tz = 'UTC'), by=paste(b, 'min', sep = ' '))
     dataset5<-data.frame(matrix(data = NA, nrow=length(x3), ncol=1), row.names = x3)
     names(dataset5)<-colnames(dataset2)[1]
-    dataset5[,1]<-as.POSIXct(strptime(x3, "%Y-%m-%d %H:%M:%S"), tz='UTC')
+    dataset5[,1]<-format(as.POSIXct(x3, "%Y-%m-%d %H:%M:%S", tz='UTC'))
     #rownames(dataset2)=dataset2$time
     #rownames(dataset5)=dataset5[,1]
     dataset6<-merge(dataset5, dataset2, by=0, all=T)
@@ -103,7 +103,7 @@ spline.interpolation<-function(df, resolution, fill=FALSE){
     }else{
       dataset6
     }
-    dataset6[,1]<-as.character(as.POSIXct(strptime(x3, "%Y-%m-%d %H:%M:%S"), tz='UTC'))
+    dataset6[,1]<-format(as.POSIXct(x3, "%Y-%m-%d %H:%M:%S", tz='UTC'))
     cat("Done!!!\n")
     if(ncol(df)<=2){
       dataset6$x<-NULL

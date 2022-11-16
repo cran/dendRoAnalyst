@@ -74,6 +74,7 @@ A list of two dataframes. The first dataframe \emph{ZG_cycle} contains the cycli
 \code{Magnitude}\tab\tab	Radial/circumferential change in millimeters.\cr
 \code{rate}\tab\tab	Rate of Radial/circumferential change in micrometers per hour.\cr
 \code{Max.twd}\tab\tab	Maximum TWD recorded for the corresponding TWD phase.\cr
+\code{twd.severity}\tab\tab	The severity of the individual TWD period (see description below).\cr
 \code{Max.twd.time}\tab\tab	Time of occurrence of maximum TWD value for each TWD phase.\cr
 \code{Avg.twd}\tab\tab	Average of TWD values for each TWD phase.\cr
 \code{STD.twd}\tab\tab	Standard deviation of TWD values for each TWD phase.
@@ -81,6 +82,8 @@ A list of two dataframes. The first dataframe \emph{ZG_cycle} contains the cycli
 }
 \description{
 This function analyses data using the zero-growth approach. Initially, it divides the data in two categories: 1) Tree water deficiency (TWD), i.e. the reversible shrinkage and expansion of the tree stem when the current reading is below the previous maximum and, 2) Increment (GRO), the irreversible expansion of the stem when the current reading is above the previous maximum. Then it calculates the TWD for each data point as the difference between the modelled "growth line" and the observed measurement. See Zweifel et. al.,(2016) for details.
+
+The severity value of each TWD was introduced in version 0.1.4 of the package. This value is calculated as product of angle of depression of the TWD period and its duration in days.
 }
 \examples{
 library(dendRoAnalyst)

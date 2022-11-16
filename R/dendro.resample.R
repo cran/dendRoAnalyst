@@ -13,7 +13,7 @@
 #' @examples library(dendRoAnalyst)
 #' data(nepa17)
 #' # To resample monthly with maximum value
-#' resample_M<-dendro.resample(df=nepa17[,1:2], by='M', value='max')
+#' resample_M<-dendro.resample(df=gf_nepa17[,1:2], by='M', value='max')
 #' head(resample_M,10)
 #'
 #' @importFrom stats approx median na.exclude na.omit sd
@@ -29,8 +29,8 @@ dendro.resample<-function(df, by, value){
   da<-NULL
   wk<-NULL
   mn<-NULL
-  temp1<-data.frame(timestamp=as.POSIXct(strptime(data[,1], format = '%Y-%m-%d %H:%M:%S'), tz='UTC'))
-  if(is.na(as.POSIXct(temp1$timestamp[1], format = '%Y-%m-%d %H:%M:%S'))){
+  temp1<-data.frame(timestamp=as.POSIXct(data[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC'))
+  if(unique(is.na(as.POSIXct(temp1$timestamp, format = '%Y-%m-%d %H:%M:%S')))){
     stop('Date not in the right format')
   }
   temp1[,2:ncol(data)]<-data[,2:ncol(data)]
