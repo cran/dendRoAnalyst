@@ -4,32 +4,26 @@
 \alias{twd.maxima}
 \title{Locating the maxima of TWD periods}
 \usage{
-twd.maxima(df, TreeNum, smoothing = 5, showPlot = T, days = c(150, 160), ...)
+twd.maxima(df, TreeNum, smoothing = 5)
 }
 \arguments{
-\item{df}{dataframe with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS}. It should contain data with constant temporal resolution for best results.}
+\item{df}{data frame with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS}. It should contain data with constant temporal resolution for best results.}
 
 \item{TreeNum}{numerical value indicating the tree to be analysed. E.g. '1' refers to the first dendrometer data column in \emph{df}.}
 
 \item{smoothing}{numerical value from 1 to 12 which indicates the length of the smoothing spline, i.e. 1 = 1 hour and 12 = 12 hours. Default is 5.}
-
-\item{showPlot}{logical, if \code{TRUE}, it generates a plot. Default is \code{TRUE}.}
-
-\item{days}{array with initial and final day for plotting. E.g. \emph{c(a,b)}, where a=initial date and b=final date. Default is \emph{c(150,160)}.}
-
-\item{...}{additional graphical parameter incuded in \code{\link[dendRoAnalyst:phase.zg]{phase.zg}}.}
 }
 \value{
-A dataframe with statistics of maxima in each TWD phase.
+A data frame with statistics of maxima in each TWD phase.
 }
 \description{
 This function detects the TWD phases, including their beginning (TWDb), using the phase.zg function. Then it calculates the number, time of occurance (Tm) and value of every local maximum within each TWD phase. In addition it calculates the time difference between 'TWDb' and each 'Tm' within each TWD phase.
 }
 \examples{
-library(dendRoAnalyst)
+\donttest{library(dendRoAnalyst)
 data(gf_nepa17)
 df1=gf_nepa17[2500:3500,]
-twd_max<-twd.maxima(df=df1, TreeNum=2, showPlot=FALSE)
-head(twd_max,10)
+twd_max<-twd.maxima(df=df1, TreeNum=2)
+head(twd_max,10)}
 
 }

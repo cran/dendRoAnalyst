@@ -12,26 +12,6 @@
 #'
 #' @param smoothing numerical value from 1 to 12 which indicates the length of the smoothing spline, i.e. 1 = 1 hour and 12 = 12 hours. Default is \code{NULL} for no smoothing.The function \code{\link[pspline:smooth.Pspline]{smooth.Pspline}} is used for smoothing the data.
 #'
-#' @param outputplot  logical, to \code{plot} the phase diagram.
-#'
-#' @param days array with initial and final day for plotting. E.g. \emph{c(a,b)}, where a = initial date and b = final date.
-#'
-#' @param cols array with three elements representing colors for shrinking, expanding and increasing phases respectively.
-#'
-#' @param phNames array with three elements for three different phases. Default is \strong{"Shrinkage", "Expansion" and "Increment"}.
-#'
-#' @param cex numeric, for the size of the points. Default is \code{NULL}.
-#'
-#' @param cex.axis numeric, for the size of the axis tick labels. Default is \code{NULL}.
-#'
-#' @param cex.legend numeric, for the size of the legend labels. Default is \code{NULL}.
-#'
-#' @param font.axis numeric, for the font type of the axis tick labels. Default is \code{NULL}.
-#'
-#' @param col.axis color names, for the color of the axis tick labels. Default is \code{NULL}.
-#'
-#' @param ... other graphical parameters.
-#'
 #' @return A list of two dataframes. The first dataframe \emph{SC_cycle} with cyclic phases along with various statistics and the second dataframe \emph{SC_phase} with assigned phases for each data point.The dataframe \emph{SC_cycle} contains the beginning, end, duration, magnitude and rate of each phase. The dataframe \emph{SC_phase} contains time and corresponding phases during that time.
 #' The contents of \emph{SC_cycle} are:
 #' \tabular{llll}{
@@ -47,43 +27,71 @@
 
 #' }
 #'
-#' @examples library(dendRoAnalyst)
+#' @examples
+#' \donttest{library(dendRoAnalyst)
 #' data(gf_nepa17)
-#' sc.phase<-phase.sc(df=gf_nepa17, TreeNum=1, smoothing=12, outputplot=TRUE, days=c(150,160))
+#' sc.phase<-phase.sc(df=gf_nepa17, TreeNum=1, smoothing=12)
 #' head(sc.phase[[1]],10)
-#' head(sc.phase[[2]],10)
+#' head(sc.phase[[2]],10)}
 #'
-#' @importFrom grDevices rgb
-#'
-#' @importFrom graphics abline axis axis.POSIXct box legend lines mtext par points polygon rect text plot
-#'
-#' @importFrom stats approx median na.exclude na.omit sd
-#'
+#' @importFrom lubridate ymd_hms ymd
+#' @importFrom dplyr mutate filter group_by summarise ungroup %>% rename across select where case_when
+#' @importFrom tibble as_tibble tibble
+#' @importFrom tidyr pivot_longer
 #' @importFrom pspline smooth.Pspline
 #'
 #' @export
-phase.sc<-function(df, TreeNum, smoothing=NULL, outputplot=FALSE, days, cols=c('#fee8c8','#fdbb84','#e34a33'),phNames = c('Shrinkage','Expansion','Increment'), cex=NULL, cex.axis=NULL,cex.legend=NULL, font.axis=NULL, col.axis=NULL, ...){
-  data<-df
-  #a<-NULL
-  #b<-NULL
-  temp<-data.frame(timestamp=as.POSIXct(data[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC'))
-  if(unique(is.na(as.POSIXct(temp$timestamp, format = '%Y-%m-%d %H:%M:%S')))){
-    stop('Date not in the right format')
+phase.sc<-function(df, TreeNum, smoothing=NULL){
+  ##################### function to calculate phases################
+  phase_cal <- function(y){
+    all_max <- cummax(y)
+    all_max_diff <-diff(all_max)
+    #all_max_diff <-all_max_diff[2:length(all_max_diff)]
+    phases<- vector('integer', length(y)-1)
+    # phases[all_max_diff > 0] <- 3
+    y_diff <- diff(y)
+    # phases[all_max_diff = 0 & y_diff>=0] <- 2
+    # phases[all_max_diff = 0 & y_diff<0] <- 1
+    phases<-sapply(seq_along(all_max_diff), function(i){
+      if(all_max_diff[i]>0){
+        ph <- 3
+      }else{
+        if(y_diff[i]>=0){
+          ph <- 2
+        }else{
+          ph <- 1
+        }
+      }
+      #print(length(phases))
+      return(ph)
+    })
+    return(phases)
   }
-  data$doy<-as.integer(format(as.POSIXct(temp[,1], format = '%Y-%m-%d %H:%M:%S'), '%j'))
-  data$yr<-as.integer(format(as.POSIXct(temp[,1], format = '%Y-%m-%d %H:%M:%S'), '%y'))
-  y1<-unique(data$yr)
-  if(length(y1)>1){
-    data$doy2<-data$doy
-    d<-max(which(data$doy==ifelse(y1[1]%%4==0,366,365)))
-    data$doy2[(d+1):nrow(data)]<-data$doy2[(d+1):nrow(data)]+data$doy2[d]
+  #####################function to cal phase stats #################
+  phase_sats<-function(dm_data, y){
+    ph_diff<-c(0,diff(y))
+    dy<-yday(c(dm_data$TIME[1], dm_data$TIME[ph_diff!=0]))
+    ph<-c(y[1],y[ph_diff!=0])
+    magn<-c(dm_data$dm[1], dm_data$dm[ph_diff!=0], dm_data$dm[nrow(dm_data)])
+    magn<-diff(magn)
+    strt_t<-c(dm_data$TIME[1], dm_data$TIME[ph_diff!=0])
+    #strt_t<-strt_t[1:length(strt_t)-1]
+    end_t <- c(strt_t[2:length(strt_t)], dm_data$TIME[nrow(dm_data)])
+    dur_h<-as.numeric(difftime(end_t, strt_t), units='hours')
+    dur_m<-as.numeric(difftime(end_t, strt_t), units='mins')
+    out <- tibble(
+      'Phases' = ph,
+      'Start' = strt_t,
+      'End' = end_t,
+      'Duration_h' = dur_h,
+      'Duration_m' = dur_m,
+      'Magnitude' = magn,
+      'rate' = magn*1000/dur_h,
+      'DOY' = dy
+    )
+    return(out)
   }
-  dm1<-TreeNum+1
-  sf<-smoothing
-  #if(sf>12|sf<1){
-  #  stop('smoothing must be between 1 to 12.')
-  #}
-  ############################
+  #####################function to calculate resolution ############
   reso_den<-function(input_time){
     time1<-input_time
     reference<-time1[1]
@@ -101,117 +109,35 @@ phase.sc<-function(df, TreeNum, smoothing=NULL, outputplot=FALSE, days, cols=c('
       return(round(reso))
     }
   }
-  #####################################################
-  #########################
-  r.denro<-reso_den(temp[,1])
+  ##################################################################
+  if (!inherits(df[[1]], 'Date') && !inherits(df[[1]], 'POSIXct')) {
+    df[[1]] <- ymd_hms(df[[1]])
+  }
+  dm_data <- as_tibble(df)%>%
+    select(c(1,TreeNum+1))
+  sf<-smoothing
+  dm_data <- dm_data %>%
+    rename(TIME = 1,
+           dm = 2)
+  r.denro<-reso_den(dm_data$TIME)
   if(is.null(sf)==T){
-    dm<-dm1
+    y_sm <- dm_data$dm
   }else{
     if(sf>12|sf<1){
       stop('smoothing must be between 1 to 12.')
     }else{
       spar2<-(60/r.denro)*12
       spar3<-(spar2/12)*sf
-      sm<-pspline::smooth.Pspline(1:nrow(data),data[,dm1],spar=spar3, w=spar3*0.1)$ysmth
-      data$sm<-sm[,1]
-      dm<- which(colnames(data)=='sm')
+      sm<-smooth.Pspline(1:nrow(dm_data),dm_data$dm,spar=spar3, w=spar3*0.1)$ysmth
+      y_sm<-sm[,1]
     }
   }
-
-  y<-c()
-  for(i in 1:nrow(data)){
-    if(isTRUE(data[,dm][i+1]-data[,dm][i]>0)==TRUE & isTRUE(max(data[,dm][1:i], na.rm = T)<data[,dm][i+1])==TRUE){
-      y[i+1]<-3
-    }else{
-      if(isTRUE(data[,dm][i+1]-data[,dm][i]>0)==TRUE){
-        y[i+1]<-2
-      }else{
-        y[i+1]<-1
-      }
-
-    }
-  }
-  data$y<-y[1:length(y)-1]
-  ##########################################################
-  ##########################################################
-  ########### to calculate different phases ################
-  ##########################################################
-  ph<-c()
-  doy<-c()
-  magn<-c()
-  for(i in 1:nrow(data)){
-    if(isTRUE(data$y[i]==data$y[i+1])==TRUE & isTRUE((i+1)-i==1)==TRUE){
-      next
-    }
-    else{
-      doy<-c(doy, i)
-      ph<-c(ph,data$y[i])
-      magn<-c(magn,data[,dm1][i])#####
-    }
-  }
-  abc<-data.frame(doy)
-  strt_time<-c()
-  for (i in 1:nrow(abc)){
-    strt_time[i]<-strftime(data[,1][abc$doy[i]], format = '%Y-%m-%d %H:%M:%S')
-  }
-  abc$doy<-NULL
-  abc$Phases<-ph
-  abc<-na.omit(abc)
-  abc$start<-strt_time[1:length(strt_time)-1]
-  abc$end<-strt_time[2:(length(strt_time))]
-  abc$Duration_m<-as.integer(difftime(strptime(abc$end, format = '%Y-%m-%d %H:%M:%S'), strptime(abc$start, format = '%Y-%m-%d %H:%M:%S'), units = 'mins'))
-  abc$Duration_h<-round(as.numeric(difftime(strptime(abc$end, format = '%Y-%m-%d %H:%M:%S'), strptime(abc$start, format = '%Y-%m-%d %H:%M:%S'), units = 'hours')),1)
-  abc$magnitude<-as.numeric(round(diff(magn),8))
-  abc$rate<-(abc$magnitude/abc$Duration_h)*1000
-  abc$DOY<-as.integer(format(strptime(abc$start, format = '%Y-%m-%d %H:%M:%S'), '%j'))
-
-  #####################################################################
-  ##################### For Plotting Phase data #######################
-  #####################################################################
-  if(outputplot==TRUE){
-    if(days[2]>days[1]){
-      a1<-as.numeric(which(data$doy==days[1]&data$yr==y1[1]))
-      b1<-as.numeric(which(data$doy==days[2]&data$yr==y1[1]))
-    }else{
-      if(length(y1)<=1|length(y1)>=3){
-        warning('WARNING: days[1] > days[2] not valid in this case. The plot is not possible.')
-      }else{
-        a1<-as.numeric(which(data$doy==days[1]&data$yr==y1[1]))############
-        b1<-as.numeric(which(data$doy2==(days[2]+data$doy[d])&data$yr==y1[2]))
-      }
-    }
-    #a1<-as.numeric(which(data$doy==days[1]))
-    #b1<-as.numeric(which(data$doy==days[2]))
-    a1_mn<-min(a1)
-    b1_mx<-max(b1)
-    data2<-data[a1_mn:b1_mx,]
-    c1<-days[2]-days[1]
-    xloc<-seq(a1_mn,b1_mx,(1440/r.denro))
-    xloc2<-c()
-    xloc4<-c()
-    for(i in 1:length(xloc)){
-      xloc2<-c(xloc2,data$doy[xloc[i]])
-      xloc4<-c(xloc4,data$yr[xloc[i]])
-    }
-    opar <- par(no.readonly =TRUE)
-    on.exit(par(opar))
-    par(mar=c(6, 4.1, 5, 4.1), xpd=TRUE)
-    plot(row.names(data2), data2[,dm1], type='l', col='grey', xlab = 'DOY', ylab = 'Stem size variation [mm]', xaxt='none', cex.axis=ifelse(is.null(cex.axis),1,cex.axis), font.axis=ifelse(is.null(font.axis),1,font.axis), col.axis=ifelse(is.null(col.axis),'black',col.axis), ...)###
-    for(i in a1_mn:b1_mx){
-      if(isTRUE(data$y[i]==1)==T){
-        points(i, data[,dm1][i], col=cols[1], pch=16, cex = ifelse(is.null(cex),1,cex))###
-      }else{
-        if(isTRUE(data$y[i]==2)==T){
-          points(i, data[,dm1][i], col=cols[2], pch=16, cex = ifelse(is.null(cex),1,cex))###
-        }else{
-          points(i, data[,dm1][i], col=cols[3], pch=16, cex = ifelse(is.null(cex),1,cex))###
-        }
-      }
-    }
-    legend('top',inset=c(0,-0.15*ifelse(is.null(cex.legend),1,cex.legend)), legend = phNames, col = cols, pch = 16, ncol = 3, box.lty = 0, text.font = 2,pt.cex = ifelse(is.null(cex),1,cex), cex=ifelse(is.null(cex.legend),1,cex.legend), bg = F)
-    axis(1, at = xloc, xloc2, las=3, cex.axis=ifelse(is.null(cex.axis),1,cex.axis),font.axis=ifelse(is.null(font.axis),1,font.axis), col.axis=ifelse(is.null(col.axis),'black',col.axis))
-    axis(3, at = xloc, xloc4, las=1, cex.axis=ifelse(is.null(cex.axis),1,cex.axis),font.axis=ifelse(is.null(font.axis),1,font.axis), col.axis=ifelse(is.null(col.axis),'black',col.axis), line = -1, tick = F)
-  }
-  data3<-data.frame('Time'=data[,1],'Phases'=data$y)
-  return(list(SC_cycle=abc, SC_phase=data3))
+  y<-phase_cal(y_sm)
+  ph_st<-phase_sats(dm_data, y)
+  dm_data <- dm_data%>%
+    mutate('Phases' = c(NA,y))
+  out<-list(SC_cycle = ph_st, SC_phase = tibble(dm_data))
+  class(out) <- "SC_output"
+  return(out)
 }
+

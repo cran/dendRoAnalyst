@@ -8,24 +8,21 @@ clim.twd(
   df,
   Clim,
   dailyValue = "max",
-  thresholdClim = 0,
-  thresholdDays = 2,
-  norm = F,
-  showPlot
+  thresholdClim = "<10",
+  thresholdDays = ">5",
+  showPlot = TRUE
 )
 }
 \arguments{
 \item{df}{dataframe with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS} and the dendrometer data in following columns.}
 
-\item{Clim}{dataframe with the first column containing \code{doy} and second column containing corresponding climate data.}
+\item{Clim}{dataframe with the first column containing \code{Date in yyyy-mm-dd} and second column containing corresponding climate data.}
 
-\item{dailyValue}{either \emph{'max', 'min'}, or \emph{'mean'} for selecting the daily resampled value. Default is \emph{'max'}. See \code{\link[dendRoAnalyst:dendro.resample]{dendro.resample}} for details.}
+\item{dailyValue}{either \emph{'max', 'min', 'mean'}, or \emph{'sum'} for selecting the daily resampled value. Default is \emph{'max'}. See \code{\link[dendRoAnalyst:dendro.resample]{dendro.resample}} for details.}
 
-\item{thresholdClim}{numeric, the theshold for the respective climatic parameter. E.g. if climatic data is precipitation then days, where precipitation is below or equal to this value, are considered as adverse climate. Dafault is 0.}
+\item{thresholdClim}{string, the theshold for the respective climatic parameter. E.g. if climatic data is precipitation then days, where precipitation is below or equal to this value, are considered as adverse climate. Dafault is '<10'.}
 
-\item{thresholdDays}{numeric, the minimum number of consecutive adverse days to be considered for analysis. For example, \code{thresholdDays}=2 means the relative radial/circumferential change is calculated for adverse periods lasting for more than 2 days. Default is 2.}
-
-\item{norm}{logical, if \code{TRUE} the function uses normalized data instead of original dataset. Default is \code{FALSE}.}
+\item{thresholdDays}{string, the minimum number of consecutive adverse days to be considered for analysis. For example, \code{thresholdDays}=2 means the relative radial/circumferential change is calculated for adverse periods lasting for more than 2 days. Default is '>5'.}
 
 \item{showPlot}{logical, if \code{TRUE}, generates plots.}
 }
@@ -36,6 +33,7 @@ A dataframe containing the respective periods, relative radial/circumference cha
 This function calculates the number and the location of climatically adverse periods within a climate time series. The user can define a duration and threshold of these conditions. The function also provides the relative radial/circumferencial change during each adverse period for the original or normalized data. See Raffelsbauer et al., (2019) for more details.
 }
 \examples{
+\donttest{
 library(dendRoAnalyst)
 data(gf_nepa17)
 data(ktm_rain17)
@@ -44,6 +42,7 @@ relative_dry_growth<-clim.twd(df=gf_nepa17, Clim=ktm_rain17, dailyValue='max', s
 
 head(relative_dry_growth,10)
 
+}
 }
 \references{
 Raffelsbauer V, Spannl S, Peña K, Pucha-Cofrep D, Steppe K, Bräuning A (2019) Tree Circumference Changes and Species-Specific Growth Recovery After Extreme Dry Events in a Montane Rainforest in Southern Ecuador. Front Plant Sci 10:342. \doi{10.3389/fpls.2019.00342}

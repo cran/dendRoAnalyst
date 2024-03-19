@@ -4,63 +4,12 @@
 \alias{phase.zg}
 \title{Application of the zero-growth approach to calculate different phases, their duration and to plot them.}
 \usage{
-phase.zg(
-  df,
-  TreeNum,
-  outputplot,
-  days,
-  linearCol = "#2c7fb8",
-  twdCol = "#636363",
-  twdFill = NULL,
-  twdFillCol = "#f03b20",
-  xlab = "DOY",
-  ylab1 = "Stem size variation [mm]",
-  ylab2 = "TWD [mm]",
-  twdYlim = NULL,
-  cex.axis = NULL,
-  cex.lab = NULL,
-  font.lab = NULL,
-  col.lab = NULL,
-  font.axis = NULL,
-  col.axis = NULL
-)
+phase.zg(df, TreeNum)
 }
 \arguments{
 \item{df}{dataframe with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS}. It should contain data with constant temporal resolution for best results.}
 
 \item{TreeNum}{numerical value indicating the tree to be analysed. E.g. '1' refers to the first dendrometer data column in \emph{df}.}
-
-\item{outputplot}{logical, to \code{plot} the phase diagram.}
-
-\item{days}{array with initial and final day for plotting. E.g. \emph{c(a,b)}, where a = initial date and b = final date.}
-
-\item{linearCol}{color for the modelled curve.}
-
-\item{twdCol}{color for the TWD curve.}
-
-\item{twdFill}{filling method for the area under the TWD curve. Equivalent to \code{density} argument of the \code{\link[graphics:polygon]{polygon}} function in the \pkg{graphics} package of R. Default value is \code{NULL}.}
-
-\item{twdFillCol}{color to fill the area under the TWD curve.}
-
-\item{xlab}{string, x label of the \code{plot}.}
-
-\item{ylab1}{string, y label of the upper \code{plot}.}
-
-\item{ylab2}{string, y label of the lower \code{plot}.}
-
-\item{twdYlim}{numeric, to define the limit of the y-axis of the lower plot. Default is \code{NULL}, which automatically adjusts the y-axis limit.}
-
-\item{cex.axis}{numeric, for the size of the axis tick labels. Default is \code{NULL}.}
-
-\item{cex.lab}{numeric, for the size of the axis labels. Default is \code{NULL}.}
-
-\item{font.lab}{numeric, for the font type of the axis labels. Default is \code{NULL}.}
-
-\item{col.lab}{color names, for the color of the axis labels. Default is \code{NULL}.}
-
-\item{font.axis}{numeric, for the font type of the axis tick labels. Default is \code{NULL}.}
-
-\item{col.axis}{color names, for the color of the axis tick labels. Default is \code{NULL}.}
 }
 \value{
 A list of two dataframes. The first dataframe \emph{ZG_cycle} contains the cyclic phases along with various statistics and the second dataframe \emph{ZG_phase} with assigned phases for each data point.The contents of \emph{ZG_cycle} are:
@@ -83,14 +32,14 @@ A list of two dataframes. The first dataframe \emph{ZG_cycle} contains the cycli
 \description{
 This function analyses data using the zero-growth approach. Initially, it divides the data in two categories: 1) Tree water deficiency (TWD), i.e. the reversible shrinkage and expansion of the tree stem when the current reading is below the previous maximum and, 2) Increment (GRO), the irreversible expansion of the stem when the current reading is above the previous maximum. Then it calculates the TWD for each data point as the difference between the modelled "growth line" and the observed measurement. See Zweifel et. al.,(2016) for details.
 
-The severity value of each TWD was introduced in version 0.1.4 of the package. This value is calculated as product of angle of depression of the TWD period and its duration in days.
+The severity value of each TWD was introduced in version 0.1.4 of the package.
 }
 \examples{
-library(dendRoAnalyst)
+\donttest{library(dendRoAnalyst)
 data(gf_nepa17)
-zg.phase<-phase.zg(df=gf_nepa17[1:600,], TreeNum=1, outputplot=TRUE, days=c(2,6))
+zg.phase<-phase.zg(df=gf_nepa17[1:600,], TreeNum=1)
 head(zg.phase[[1]],10)
-head(zg.phase[[2]],10)
+head(zg.phase[[2]],10)}
 
 }
 \references{

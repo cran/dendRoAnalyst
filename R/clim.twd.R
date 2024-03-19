@@ -6,21 +6,26 @@
 #'
 #' @param df dataframe with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS} and the dendrometer data in following columns.
 #'
-#' @param Clim dataframe with the first column containing \code{doy} and second column containing corresponding climate data.
+#' @param Clim dataframe with the first column containing \code{Date in yyyy-mm-dd} and second column containing corresponding climate data.
 #'
-#' @param dailyValue either \emph{'max', 'min'}, or \emph{'mean'} for selecting the daily resampled value. Default is \emph{'max'}. See \code{\link[dendRoAnalyst:dendro.resample]{dendro.resample}} for details.
+#' @param dailyValue either \emph{'max', 'min', 'mean'}, or \emph{'sum'} for selecting the daily resampled value. Default is \emph{'max'}. See \code{\link[dendRoAnalyst:dendro.resample]{dendro.resample}} for details.
 #'
-#' @param thresholdClim numeric, the theshold for the respective climatic parameter. E.g. if climatic data is precipitation then days, where precipitation is below or equal to this value, are considered as adverse climate. Dafault is 0.
+#' @param thresholdClim string, the theshold for the respective climatic parameter. E.g. if climatic data is precipitation then days, where precipitation is below or equal to this value, are considered as adverse climate. Dafault is '<10'.
 #'
-#' @param thresholdDays numeric, the minimum number of consecutive adverse days to be considered for analysis. For example, \code{thresholdDays}=2 means the relative radial/circumferential change is calculated for adverse periods lasting for more than 2 days. Default is 2.
-#'
-#' @param norm logical, if \code{TRUE} the function uses normalized data instead of original dataset. Default is \code{FALSE}.
+#' @param thresholdDays string, the minimum number of consecutive adverse days to be considered for analysis. For example, \code{thresholdDays}=2 means the relative radial/circumferential change is calculated for adverse periods lasting for more than 2 days. Default is '>5'.
 #'
 #' @param showPlot logical, if \code{TRUE}, generates plots.
 #'
 #' @return A dataframe containing the respective periods, relative radial/circumference change for each tree, the ID for each period and their beginning and end.
 #'
-#' @examples library(dendRoAnalyst)
+#' @importFrom lubridate ymd_hms ymd
+#' @importFrom dplyr mutate filter group_by summarise ungroup %>% rename across select where case_when
+#' @importFrom tibble as_tibble tibble
+#' @importFrom ggplot2 ggplot geom_area geom_rect geom_text aes theme_minimal labs geom_line geom_point facet_wrap theme element_text
+#' @importFrom tidyr pivot_longer
+#' @examples
+#' \donttest{
+#' library(dendRoAnalyst)
 #' data(gf_nepa17)
 #' data(ktm_rain17)
 #' relative_dry_growth<-clim.twd(df=gf_nepa17, Clim=ktm_rain17, dailyValue='max', showPlot=TRUE)
@@ -28,168 +33,108 @@
 #'
 #' head(relative_dry_growth,10)
 #'
-#' @importFrom grDevices rgb
-#'
-#' @importFrom graphics abline axis axis.POSIXct box legend lines mtext par points polygon rect text plot
-#'
-#' @importFrom stats approx median na.exclude na.omit sd
-#'
-#' @importFrom zoo na.spline
-#'
+#'}
 #' @export
-clim.twd <- function(df,Clim,dailyValue='max',thresholdClim=0,thresholdDays=2,norm=F,showPlot){
-  temp <- df
-  if(ncol(df)<=2){
-    temp[,3]<-temp[,2]
-    colnames(temp)=c(colnames(df),'x')
-  }else{
-    temp<-temp}
-  #n <- treeNum+1
-  rn <- Clim
-  da <- dendRoAnalyst::dendro.resample(temp,'D',dailyValue)
-  nm=colnames(da)
-  if(isTRUE(norm)){
-    for(col in 2:ncol(da)){
-      da[,col]=(da[,col]-mean(da[,col],na.rm = T))/sd(da[,col],na.rm = T)
-    }
-    colnames(da)=nm
+clim.twd <- function(df,Clim,dailyValue='max',thresholdClim = '<10',thresholdDays ='>5', showPlot=TRUE){
+  if (!inherits(df[[1]], 'Date') && !inherits(df[[1]], 'POSIXct')) {
+    df[[1]] <- ymd_hms(df[[1]])
   }
-  x <- c(ifelse(rn[,2]<=thresholdClim,'y','n'))
-  doy <- rn[,1]
-  doy2 <- as.numeric(format(as.POSIXct(strptime(da[,1], format = '%Y-%m-%d')), '%j'))
-  sl <- which(x=='y')
-  el<-which(x=='n')
-  if(isTRUE(sl[1]>el[1])){
-    el<-c(el[sl[1]-1],el[el>=sl[1]])
-  }else{
-    el<-c(sl[1],el)
-    }
-  if(isTRUE(sl[length(sl)]==length(doy))){
-    el<-c(el,sl[length(sl)])
+  if (!inherits(Clim[[1]], 'Date') && !inherits(Clim[[1]], 'POSIXct')) {
+    Clim[[1]] <- ymd(Clim[[1]])
   }
-  ##############################################
-  srt<-c()
-  en<-c()
-  d2<-c()
-  for(i in 2:length(el)){
-    x1<-sl[(el[i-1])<sl& sl<el[i]]
-    y<-x1-el[i-1]
-    z1<-matrix(nrow=length(x1),ncol = ncol(da)-1)
-    for(j in 2:ncol(da)){
-      a<-c()
-      for(k in 1:length(x1)){
-        a<-c(a,which(doy2==doy[x1[k]]))
-      }
-      b<-which(doy2==doy[el[i-1]])
-      z<-da[a,j]-da[b,j]
-      z1[,j-1]<-z
+  TIME <- DATE <-IDs <-climate <-condition <- Value <- Variable <- NULL
+  df <- dendro.resample(df=df, by='D', value=dailyValue)
+  df <- df%>%
+    mutate('TIME' = as.Date(TIME))
+  #df$TIME <- yday(df$TIME)
+  clim <- as_tibble(Clim)
+  clim <- clim%>%
+    rename('DATE' = 1,
+           'climate' = 2)
+  ctime <- intersect(df$TIME, clim$DATE)
+  if(length(ctime)==0){
+    stop("The dendrometer and climate data do not have a common time period.")
+  }else{
+    if((length(ctime)==nrow(df)) & (length(ctime)==nrow(clim))){
+      df <- df
+      clim <- clim
+    }else{
+      message("The analyses period is reduced to common time period.")
+      common_t<-as.Date(ctime, origin='1970-01-01', tz='UTC')
+      df<-df%>%filter(TIME%in%common_t)
+      clim<-clim%>%filter(DATE%in%common_t)
     }
-    colnames(z1)<-paste('rel_change_',colnames(da)[2:ncol(da)], sep = '')
-    #srt<-c(srt,doy[x1[1]])
-    #en<-c(en,doy[x1[length(x1)]])
-    d2<-rbind.data.frame(d2,data.frame('Time_lag'=y, z1,
-                                      'period_id'=rep(i-1,length(x1)),
-                                      'strt'=rep(doy[x1[1]],length(x1)),
-                                      'end'=rep(doy[x1[length(x1)]],length(x1))))
+  }
+  operator<-substr(thresholdClim, 1, 1)
+  value <- as.numeric(substr(thresholdClim, 2, nchar(thresholdClim)))
+  operator_fun <- match.fun(operator)
+  x <- ifelse(operator_fun(clim[[2]],value), 1,0)
+  st <- c(x[1], diff(x)) == 1
+  cond <- cumsum(st)*x
+
+  operator_c<-substr(thresholdDays, 1, 1)
+  value_c <- as.numeric(substr(thresholdDays, 2, nchar(thresholdDays)))
+  operator_fun_c <- match.fun(operator_c)
+
+  if(!(value_c%in%c(0,1))){
+    cond2 <- cond[cond>0]
+    cond3 <-unique(cond2)
+    for(i in seq_along(cond3)){
+      cond[cond==cond3[i]] <- ifelse(operator_fun_c(length(cond[cond==cond3[i]]), value_c), i, 0)
+    }
+    cond[cond>0] = 1
+    st <- c(cond[1], diff(cond)) == 1
+    cond <- cumsum(st)*cond
   }
 
-  #################################################
-  if(isTRUE(showPlot)){
-    l<-c()
-    ue<-c()
-    id<-c()
-    un<-unique(d2$period_id)
-    for (i in 1:length(un)){
-      df1<-subset(d2,d2$period_id==un[i])
-      if(nrow(df1)>thresholdDays){
-        l<-c(l,unique(df1$strt))
-        ue<-c(ue,unique(df1$end))
-        id<-c(id,un[i])
-      }
-    }
-    ###################################################
-    x_lab<-c(1,32,60,91,121,152,182,213,244,274,305,335,365)
-    opar <- par(no.readonly =TRUE)
-    on.exit(par(opar))
-    par(mar=c(5,1,10,1), xpd=F)
-    plot(rn[,1],rn[,2],cex.lab=1.5,
-         cex.axis=1.25, xlab = names(rn)[1],
-         ylab='',col='white', ylim = c(0,max(rn[,2], na.rm=T)),
-         xaxt='none', yaxt='none')
-    abline(v=(l+ue)/2)
-    for(i in 1:nrow(rn)){
-      if(x[i]=='y'){
-        rect(xleft = doy[i]-0.5, xright = doy[i]+0.5,
-             ybottom = -2, ytop = max(rn[,2], na.rm = T),
-             col='gray',border = 'grey')
-      }else{
-        rect(xleft = doy[i]-0.5, xright = doy[i]+0.5,
-             ybottom = -2, ytop = max(rn[,2], na.rm = T),
-             col='steelblue',border = 'steelblue')
-      }
-    }
-    axis(side=3,at=(l+ue)/2,labels = id, las=2, cex.axis = 0.6, font = 2)
-    axis(side=1,at=x_lab,labels = x_lab, las=1, cex.axis = 1, font = 2)
-    #########################################################
+  df <- df %>%
+    mutate('IDs' = cond)
 
-    output<-data.frame('start_doy'=l, 'end_doy'=ue, 'Id'=id)
+  clim <- clim %>%
+    mutate('condition' = st,
+           'IDs' = cond)
+  result <- df %>%
+    group_by(IDs) %>%
+    mutate(across(where(is.numeric), ~ . - first(.))) %>%
+    ungroup()%>%
+    filter(IDs>0)
+  if(showPlot){
+  #plotting the precipitation data
+    p1 <- ggplot(clim, aes(x = DATE, y = climate, group=1)) +
+      geom_area(fill = 'blue') +
+      geom_rect(data = subset(clim, condition),
+                aes(xmin = DATE, xmax = DATE+value_c , ymin = -Inf, ymax = Inf),
+                fill = "red", alpha = 0.2) +
+      geom_text(data=subset(clim, condition), aes(x=DATE,label = IDs), nudge_y = max(clim$climate))+
+      #scale_fill_manual(values = c("TRUE" = "red", "FALSE" = "grey")) +
+      theme_minimal() +
+      labs(title = "Condition-based climate Plot", x = "Date", y = "Climate value")
+    print(p1)
+
+    #################################################################################################
     print('The adverse climatic periods are listed below:')
-    print(output)
+    print(unique(result$IDs))
     print("Please choose periods' id from the list. Please press enter two times when you are done.")
     perd<-c()
     perd<-scan()
     if(length(perd)==0){
-      perd<-id[2:4]
+      perd<-1
     }
-    clrs<-c('red','blue','green','purple','goldenrod','maroon','black','mediumorchid1','red','blue','green','yellow','purple','goldenrod','maroon','black','mediumorchid1','red','blue','green','yellow','purple','goldenrod','maroon','black','mediumorchid1')
-    mn2<-c()
-    mx2<-c()
-    mn3<-c()
-    for(k in 1:length(perd)){
-      df3<-subset(d2, d2$period_id==perd[k])
-      mn1<-min(df3[,2:(ncol(df3)-3)])
-      mx1<-max(df3[,2:(ncol(df3)-3)])
-      mn2<-c(mn2,mn1)
-      mx2<-c(mx2,mx1)
-      mn3<-c(mn3,nrow(df3))
-    }
-    y_mx<-max(mx2)
-    y_mn<-min(mn2)
-    x_mx<-max(mn3)
-    cols<-clrs[1:length(perd)]
-    opar <- par(no.readonly =TRUE)
-    on.exit(par(opar))
-    par(mar=c(5,6,8,8), xpd=T)
-    plot(1,1, xlim = c(1,x_mx),ylim = c(y_mn,y_mx), col='white', xlab = 'Consecutive days', ylab = ifelse(isTRUE(norm),'Normalized relative growth variation (mm)','Relative growth variation (mm)'), cex.axis=1.25, cex.lab=1.5, xaxt='n')
-    for(k in 1:length(perd)){
-      df3<-subset(d2, d2$period_id==perd[k])
-      if(isTRUE(ncol(df)<=2)){
-        lines(df3[,1],df3[,2], col=cols[k], type='b', lwd=2,pch=1,bg=cols[k])
-        legend('topright', inset=c(-0.25,0),legend = colnames(df)[2], col = 'black', pch = 1,ncol = 1, pt.bg = 'black', bty = 'n', title = 'Trees')
-        legend('topright', inset=c(-0.25,0.2),legend = paste('ID_',perd,sep = ''), col = cols,lty = 1,ncol = 1, lwd = 2, bty='n',title = 'Clim Ids')
-        axis(1, at=seq(1,x_mx,1), labels = seq(1,x_mx,1), cex.axis=1.25, las=2)
-        axis(3, at=seq(1,x_mx,1), labels = seq(1,x_mx,1)+(df3$strt[1]-1), cex.axis=1.25, las=2)
-        mtext('DOY',3,3,cex = 1.25)
-      }else{
-        for(a in 1:ncol(df3[,2:(ncol(df3)-3)])){
-          lines(df3[,1],df3[,(a+1)], col=cols[k], type='b', lwd=2,pch=a,bg=cols[k])
-          #points(df3[,1],df3[,(a+1)], col=cols[k],pch=a, cex=1.25)
-          legend('topright', inset=c(-0.25,0),legend = colnames(temp[,2:(ncol(temp))]), col = 'black', pch = 1:ncol(df3[,2:(ncol(df3)-3)]),ncol = 1, pt.bg = 'black', bty = 'n', title = 'Trees', pt.cex = 1, cex = 0.75)
-          legend('topright', inset=c(-0.25,0.1*(ncol(df)-1)),legend = paste('ID_',perd,sep = ''), col = cols,lty = 1,ncol = 1, lwd = 2, bty='n',title = 'Clim Ids', pt.cex = 1, cex = 0.75, text.col = cols)
-          axis(1, at=seq(1,x_mx,1), labels = seq(1,x_mx,1), cex.axis=1.25, las=2)
-          if(length(perd)==1){
-            axis(3, at=seq(1,x_mx,1), labels = seq(1,x_mx,1)+(df3$strt[1]-1), cex.axis=1.25, las=2)
-            mtext('DOY',3,3,cex = 1.25)
-          }
+    fdf<- result %>%
+      filter(IDs%in%perd)
+    data_long <- pivot_longer(fdf, cols = c(-1,-ncol(result)), names_to = "Variable", values_to = "Value")
+    p2 <- ggplot(data_long, aes(x = TIME, y = Value, color = Variable)) +
+      geom_line() +
+      geom_point()
+      if(length(perd)>1){
+        p2 <- p2+facet_wrap(~ IDs, scales = "free", ncol = 1)
       }
-      }
-    }
+      p2<-p2+labs(title = "Relative growth change in adverse climate",
+           x = "Time",
+           y = "Relative growth change",
+           color = "Trees") +
+      theme_minimal() + theme(legend.position = "bottom") +theme(axis.title = element_text(size = 14), axis.text = element_text(size = 12))
+    print(p2)
   }
-  if(ncol(df)<=2){
-    d3<-d2
-    d3[,3]<-NULL
-    return(d3)
-  }else{
-    return(d2)
-  }
+  return(result)
 }

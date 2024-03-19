@@ -15,24 +15,25 @@ daily.data(df, TreeNum)
 A dataframe with the daily statistics of the dendrometer data that contains:
 \tabular{llll}{
 \strong{Columns}\tab\tab   \strong{Description}\cr
-\code{DOY}\tab\tab    The day of year.\cr
-\code{min}\tab\tab    The minimum value record for the corresponding day.\cr
+\code{DATE}\tab\tab    The day of year in "yyyy-mm-dd".\cr
+\code{Min}\tab\tab    The minimum value record for the corresponding day.\cr
 \code{Time_min}\tab\tab    The time when minimum value recorded for the corresponding day.\cr
-\code{max}\tab\tab    The maximum value record for the corresponding day.\cr
+\code{Max}\tab\tab    The maximum value record for the corresponding day.\cr
 \code{Time_max}\tab\tab    The time when maximum value recorded for the corresponding day.\cr
 \code{mean}\tab\tab    The daily average value of the dendrometer reading.\cr
 \code{median}\tab\tab    The daily median value of the dendrometer reading.\cr
 \code{amplitude}\tab\tab   The difference between daily maximum and daily minimum.\cr
+\code{Remarks}\tab\tab   "*" if Time_max > Time_min otherwise "".\cr
 }
 }
 \description{
 This function calculates various statistics of dendrometer data on a daily basis. The daily statistics includes the daily maximum and minimum with their corresponding times and daily amplitude (difference between daily maximum and minimum). See King et al. (2013) for details.
 }
 \examples{
-library(dendRoAnalyst)
+\donttest{library(dendRoAnalyst)
 data(nepa17)
 daily_stats<-daily.data(df=nepa17, TreeNum=1)
-head(daily_stats,10)
+head(daily_stats,10)}
 
 }
 \references{

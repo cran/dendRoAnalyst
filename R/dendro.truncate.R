@@ -10,77 +10,69 @@
 #'
 #' @return A dataframe with the truncated data for the defined periods.
 #'
-#' @examples library(dendRoAnalyst)
+#' @importFrom stats approx median na.exclude na.omit sd
+#' @importFrom lubridate ymd_hms ymd year yday
+#' @importFrom dplyr mutate filter group_by summarise ungroup %>% rename across select where case_when
+#' @importFrom tibble as_tibble tibble
+#' @importFrom ggplot2 ggplot geom_area geom_rect geom_text aes theme_minimal labs geom_line geom_point facet_wrap theme element_text
+#' @importFrom tidyr pivot_longer
+#'
+#' @examples
+#' \donttest{library(dendRoAnalyst)
 #' data(nepa)
 #' #Extracting data from doy 20 to 50 in 2017.
 #' trunc1<-dendro.truncate(df=nepa, CalYear=2017, DOY=c(20,50))
-#' head(trunc1,10)
-#'
-#' @importFrom stats approx median na.exclude na.omit sd
+#' head(trunc1,10)}
 #'
 #' @export
-dendro.truncate<-function (df, CalYear,DOY)
-{
-  data <- df
+dendro.truncate<-function (df, CalYear,DOY){
+  TIME <- yr.1 <- da.1 <- NULL
   cy<-CalYear
   doy<-DOY
-  yr <- NULL
-  temp1 <- data.frame(timestamp = as.POSIXct(strptime(data[,1],format = "%Y-%m-%d %H:%M:%S"), tz = "UTC"))
-  if (is.na(as.POSIXct(temp1$timestamp[1], format = "%Y-%m-%d %H:%M:%S"))) {
-    stop("Date not in the right format")
+  if (is.null(cy)|is.null(doy)){
+    stop('Either "CalYear" and(or) "DOY" are empty.')
   }
-  temp1[, 2:ncol(data)] <- data[, 2:ncol(data)]
-  temp1$yr <- as.numeric(format(temp1$timestamp, "%Y"))
-  temp1$da <- as.numeric(format(temp1$timestamp, "%j"))
-  yr1 <- unique(temp1$yr)
-  if(is.null(doy)==F){
-    if(length(doy)>2|length(cy)>2){
-      stop("The length of input 'CalYear' or 'DOY' is > 3.")
-    }
-    if(length(doy)==2&length(cy==1)){
-      if (cy %in% yr1 == FALSE) {
-        stop("Provided year does not exist in dataset.")
-      }
-      year1<-subset(temp1, temp1$yr==cy&temp1$da>=doy[1]&temp1$da<=doy[2])
-    }
-    if(length(doy)==1&length(cy==1)){
-      if (cy %in% yr1 == FALSE) {
-        stop("Provided year does not exist in dataset.")
-      }
-      year1<-subset(temp1, temp1$yr==cy&temp1$da==doy)
-    }
-    if(length(cy)==2&length(doy)==1){
-      if (cy[1] %in% yr1 == FALSE|cy[2] %in% yr1 == FALSE) {
-        stop("Provided year does not exist in dataset.")
-      }
-      an1<-subset(temp1, temp1$yr==cy[1]&temp1$da>=doy)
-      an2<-subset(temp1, temp1$yr==cy[2]&temp1$da<=doy)
-      year1<-rbind(an1,an2)
-    }
-    if(length(cy)==2&length(doy)==2){
-      cy1<-cy[1]
-      cy2<-cy[2]
-      if (cy1 %in% yr1 == FALSE) {
-        stop("Provided year does not exist in dataset.")
-      }
-      if (cy2 %in% yr1 == FALSE) {
-        stop("Provided year does not exist in dataset.")
-      }
-      an11<-subset(temp1, temp1$yr==cy1)
-      an1<-subset(an11,an11$da>=doy[1])
-      an21<-subset(temp1, temp1$yr==cy2)
-      an2<-subset(an21, an21$da<=doy[2])
-      year1<-rbind(an1,an2)
-    }
+  if(length(doy)>2|length(cy)>2){
+    stop("The length of input 'CalYear' or 'DOY' is > 3.")
+  }
 
-  }else{
-    if (cy %in% yr1 == FALSE) {
+  if (!inherits(df[[1]], 'Date') && !inherits(df[[1]], 'POSIXct')) {
+    df[[1]] <- ymd_hms(df[[1]])
+  }
+  data <- tibble(df)%>%
+    rename(TIME = 1)
+
+  yr=NULL
+  data<-data %>%
+    mutate(yr.1 = year(TIME),
+          da.1 = yday(TIME))
+  yr1 <- unique(data$yr.1)
+  for(i in cy){
+    if (i %in% yr1 == FALSE) {
       stop("Provided year does not exist in dataset.")
     }
-    year1 <- subset(temp1, temp1$yr == cy)
   }
-  year2 <- year1[, 1:ncol(data)]
-  colnames(year2) <- colnames(data)
-  row.names(year2) <- 1:nrow(year2)
-  return(year2)
+  if(length(doy)==2&length(cy==1)){
+      mn.p<-min(row.names(data)[data$yr.1==cy[1] & data$da.1==doy[1]])
+      mx.p<-max(row.names(data)[data$yr.1==cy[1] & data$da.1==doy[2]])
+      year1 <- data[mn.p:mx.p,]
+    }
+  if(length(doy)==1&length(cy==1)){
+      year1<-data  %>%
+        filter(yr.1==cy[1], da.1 == doy[1])
+    }
+  if(length(cy)==2&length(doy)==1){
+    mn.p<-min(row.names(data)[data$yr.1==cy[1] & data$da.1==doy[1]])
+    mx.p<-max(row.names(data)[data$yr.1==cy[2] & data$da.1==doy[1]])
+    year1 <- data[mn.p:mx.p,]
+  }
+  if(length(cy)==2 & length(doy)==2){
+      mn.p<-min(row.names(data)[data$yr.1==cy[1] & data$da.1==doy[1]])
+      mx.p<-max(row.names(data)[data$yr.1==cy[2] & data$da.1==doy[2]])
+      year1 <- data[mn.p:mx.p,]
+    }
+  year1 <- year1%>%
+    mutate(yr.1 = NULL,
+           da.1 = NULL)#[,c('yr.1','da.1')] <- NULL
+  return(year1)
 }

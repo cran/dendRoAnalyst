@@ -10,71 +10,84 @@
 #'
 #' @param v numerical value which is considered as artefact. E.g. \code{v}=1 implies that if the difference to the consecutive data point is more than 1 or less than -1, it will be considered as an artefact.
 #'
-#' @importFrom grDevices rgb
-#'
-#' @importFrom graphics abline axis axis.POSIXct box legend lines mtext par points polygon rect text plot
-#'
-#' @importFrom stats approx median na.exclude na.omit sd
-#'
-#' @examples library(dendRoAnalyst)
-#' data(nepa)
-#' jump_free_nepa<-i.jump.locator(df=nepa, TreeNum=1 ,v=1)
-#' head(jump_free_nepa,10)
-#'
+#' @importFrom lubridate ymd_hms ymd
+#' @importFrom dplyr mutate filter group_by summarise ungroup %>% rename across select where case_when slice
+#' @importFrom tibble as_tibble tibble
+#' @importFrom ggplot2 ggplot geom_area geom_rect geom_text aes theme_minimal labs geom_line geom_point facet_wrap theme element_text geom_vline xlab ylab ggtitle
+#' @importFrom tidyr pivot_longer
 #' @export
-i.jump.locator<-function(df, TreeNum, v){
-  temp<-df
-  ju<-v
-  if(unique(is.na(as.POSIXct(temp[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC')))){
-    stop('Date not in the right format')
-  }
-  x<-as.POSIXct(temp[,1], "%Y-%m-%d %H:%M:%S", tz='UTC')
-  x2<-paste(x)
-  y<-temp[,TreeNum+1]
-  y_d<-diff(y)
-  y_d2<-c(0,y_d)
-  pos.ju<-y_d2[y_d2>= ju]
-  neg.ju<-y_d2[y_d2<= -ju]
-  all.ju<-y_d2[y_d2>=ju|y_d2<= -ju]
-  j.loc<-which(y_d2>=ju|y_d2<= -ju)
-  if(length(j.loc)==0){
-    print('There is no jump in your dendrometer data.')
-    return(temp)
-  }else{
-    #par(xpd=F)
-    plot(x,y, type='l',main = 'Data with all jump(s)', xlab = '',ylab = 'Increment (mm)',xaxt = 'n')
-    abline(v=x[j.loc], lwd=3, col=rgb(255,0,0, maxColorValue=255, alpha = 127))
-    axis.POSIXct(1, at=seq(as.POSIXct(x[1]), as.POSIXct(x[length(x)]), by="month"), format= "%b-%y", las= 2,cex.axis = 1)#############
-    for(i in j.loc){
-      text(x[i],mean(y),labels = round(y_d2[i],2), srt=90, cex =1)
-    }
-    jump_data<-matrix(1,nrow = length(j.loc), ncol = 3)
-    jump_data[,1]<-as.numeric(j.loc)
-    jump_data[,2]<-noquote(x2[j.loc])
-    jump_data[,3]<-as.numeric(round(y_d2[j.loc],3))
-    row.names(jump_data)<-1:length(j.loc)
-    colnames(jump_data)<-c('Location','Time','Difference')
-    print('The jump(s) in dendrometer data:')
-    print(jump_data)
-    invisible(readline(prompt="Press [enter] to continue"))
-    for(i in j.loc){
-      plot(x[(i-10):(i+10)],y[(i-10):(i+10)], type='l', xlab = 'Time', ylab = 'Increment', main = paste('Jump at',x[i]), yaxt='n', ylim = c(min(y[(i-10):(i+10)]),max(y[(i-10):(i+10)])))
-      rect(x[(i-1)],min(y[(i-10):(i+10)]),x[(i+1)],max(y[(i-10):(i+10)]), col=rgb(255,0,0, maxColorValue = 255, alpha = 127), border = NA)
-      axis(2,seq(min(y[(i-10):(i+10)]),max(y[(i-10):(i+10)]),(max(y[(i-10):(i+10)])-min(y[(i-10):(i+10)]))/4))
-      invisible(readline(prompt="Press [enter] to adjust this jump"))
-      y[i:length(y)]<-y[i:length(y)]-(y_d2[i])
-      plot(x[(i-10):(i+10)],y[(i-10):(i+10)], type='l', xlab = 'Time', ylab = 'Increment', main = paste('Removal of jump at',x[i]), yaxt='n', ylim = c(min(y[(i-10):(i+10)]),max(y[(i-10):(i+10)])))
-      rect(x[(i-1)],min(y[(i-10):(i+10)]),x[(i+1)],max(y[(i-10):(i+10)]), col=rgb(0,255,0, maxColorValue=255, alpha = 127), border = NA)
-      axis(2,seq(min(y[(i-10):(i+10)]),max(y[(i-10):(i+10)]),(max(y[(i-10):(i+10)])-min(y[(i-10):(i+10)]))/4))
-      invisible(readline(prompt="Press [enter] to continue"))
-    }
-    plot(x,y,type = 'l', main = 'Data after removal of all jump(s)', xlab = '',ylab = 'Increment (mm)',xaxt = 'n')
-    abline(v=x[j.loc], lwd=3, col=rgb(0,255,0, maxColorValue=255, alpha = 127))
-    axis.POSIXct(1, at=seq(as.POSIXct(x[1]), as.POSIXct(x[length(x)]), by="month"), format= "%b-%y", las= 2,cex.axis = 1)#####
-    temp2<-data.frame('Time'=format(x),'corrected.data'=y)
-    colnames(temp2)<-colnames(temp)[c(1,(TreeNum+1))]
-    cat('Done!!!')
-    return(temp2)
-  }
 
+i.jump.locator<-function(df, TreeNum, v){
+  ##########################################
+  plot_jump <- function(df, jl, st, t, title){
+    df <- df%>%
+      rename(dm = 2)
+    p<-ggplot(data=df, mapping = aes(TIME, dm))+
+      geom_line(color='black')+
+      geom_vline(xintercept = as.numeric(t), color = ifelse(st=="a","red","green"), lwd = 3, alpha=0.5)+
+      theme_minimal()+xlab('Time')+ylab('Stem size variation')+ggtitle(title)
+    print(p)
+  }
+  ##########################################
+  TIME <- dm <- . <- NULL
+  if(TreeNum>ncol(df)-1){
+    stop('Tree number does not exist in the provided dataset')
+  }
+  if (!inherits(df[[1]], 'Date') && !inherits(df[[1]], 'POSIXct')) {
+    df[[1]] <- ymd_hms(df[[1]])
+  }
+  df <- as_tibble(df)%>%
+    rename(TIME = 1)%>%
+    select(c(1,TreeNum+1))%>%
+    mutate(diff_dm = c(0, diff(.[[2]])))
+  jl <- which(abs(df$diff_dm)>=v)
+  if(length(jl)==0){
+    message('There is no jump in the dendrometer.')
+    df<-df%>%
+      select(1:2)
+    return(df)
+  }else{
+    jump.info<-df%>%
+      slice(jl)%>%
+      select(c(1,3))%>%
+      rename(Jump_at = 1,
+             Jump_by = 2)
+    print(jump.info)
+    plot_jump(df, jl, st="a", t=jump.info$Jump_at, title='Overview of jump(s)')
+    data<-df[[2]]
+    for(i in seq_along(jl)){
+      fl<-jl[i]-20
+      fm<-jl[i]+20
+      print(fl)
+      df_sl<-df%>%
+        slice(fl:fm)%>%
+        rename(dm=2)
+      # Loop until a valid response is received
+      user_input <- ''
+      while(!user_input %in% c("yes", "no")) {
+        user_input <- readline(prompt = paste("Do you want to move forward with jump adjustment at",jump.info$Jump_at[i], "(yes/no): "))
+        user_input <- tolower(user_input)
+        plot_jump(df=df_sl, jl=jl[i], st='a', t=jump.info$Jump_at[i], title=paste(jump.info$Jump_at[i], ', before adjustment'))
+        if(user_input == "yes") {
+          invisible(readline(prompt="Press [enter] to continue"))
+          print(paste("Adjusting jump at",jump.info$Jump_at[i],"...."))
+          data[jl[i]:length(data)] <- data[jl[i]:length(data)]-jump.info$Jump_by[i]
+          df_sl$dm <- data[fl:fm]
+          plot_jump(df=df_sl, jl=jl[i], st='b', t=jump.info$Jump_at[i], title=paste(jump.info$Jump_at[i], ', after adjustment'))
+          invisible(readline(prompt="Press [enter] to continue"))
+          print(paste("Adjusting jump at",jump.info$Jump_at[i],"...."))
+        } else if(user_input == "no") {
+          print(paste("Skipping adjusting jump at",jump.info$Jump_at[i],"...."))
+          next
+        } else {
+          print("Invalid input. Please enter 'yes' or 'no'.")
+          # Optionally, you might want to loop back and ask again until a valid response is received
+        }
+      }
+    }
+    df[[2]] = data
+    df$diff_dm <-NULL
+    plot_jump(df, jl, st="b", t=jump.info$Jump_at, title='Overview after adjustment of jump(s)')
+    return(df)
+  }
 }

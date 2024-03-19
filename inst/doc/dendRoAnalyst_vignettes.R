@@ -4,12 +4,12 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ---- echo=FALSE, results='asis'----------------------------------------------
+## ----echo=FALSE, results='asis'-----------------------------------------------
 knitr::kable(head(dendRoAnalyst::nepa, 5))
 
-## ---- echo=FALSE, results='asis'----------------------------------------------
+## ----echo=FALSE, results='asis'-----------------------------------------------
 knitr::kable(head(dendRoAnalyst::nepa2,5))
 
-## ---- echo=FALSE, results='asis'----------------------------------------------
+## ----echo=FALSE, results='asis'-----------------------------------------------
 knitr::kable(head(dendRoAnalyst::nepa, 5))
 

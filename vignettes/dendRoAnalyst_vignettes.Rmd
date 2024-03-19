@@ -20,26 +20,22 @@ This package offers various functions for managing and cleaning data before the 
 
 ## Data formatting
 
-The package requires a well formatted dataset as a input. The first column must consist of time in extended date-time format (e.g. yyyy-mm-dd HH:MM:SS) without daylight savings. The dendrometer data for each sensors has to be sorted from the second column onward. The package is flexible to column names but is strict with their order. 
+The package requires a well formatted data set as a input. The first column must consist of time in extended date-time format (e.g. yyyy-mm-dd HH:MM:SS) without daylight savings. From the version 0.1.5, the package can handle the data set with extended time format in first column regardless of their format. However, the first column must have datetime from year to second. The dendrometer data for each sensors has to be sorted from the second column onward. The package is flexible to column names but is strict with their order. 
 
 ## Data import
-Various dendrometers store data in different formats. Some of them generates time in extended date-time format in one column whereas others generate time with different units in different columns. We recommend converting the data to comma separated value (.csv) or plain text (.txt) format before importing to R.
+Various dendrometers store data in different formats. Some of them generates time in extended date-time format in one column whereas others generate time with different units in different columns. We recommend converting the data to comma separated value (.csv) or plain text (.txt) format before importing to R. However, package can also read excel file from version 0.1.5.
 
 ### Importing dataset containing date-time in one column
-If the dataset looks like in the table 1, one can simply read it using either read.csv() or read.table() functions based on the file format.
+If the dataset looks like in the table 1, one can simply read it using "read.dendrometer" functions. The function is able to read CSV, TXT and EXCEL files. 
 
 
 **Table 1: Dendrometer data with extended date-time in one column**
 ```{r, echo=FALSE, results='asis'}
 knitr::kable(head(dendRoAnalyst::nepa, 5))
 ```
-For comma separated value (.csv) format:
+For plain text (.txt), comma separated (.csv) and excel (.xlsx) format:
 
-    df <- read.csv("nepa.csv", header = TRUE)
-
-For plain text (.txt) format:
-
-    df <- read.table("nepa.txt", sep = "\t", header = TRUE)
+    df <- read.dendrometer("nepa.txt")
     
 
 ### Importing a dataset with date and time in separate columns

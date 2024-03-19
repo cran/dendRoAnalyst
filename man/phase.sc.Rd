@@ -4,21 +4,7 @@
 \alias{phase.sc}
 \title{Application of the stem-cycle approach to calculate different phases, their duration and to plot them.}
 \usage{
-phase.sc(
-  df,
-  TreeNum,
-  smoothing = NULL,
-  outputplot = FALSE,
-  days,
-  cols = c("#fee8c8", "#fdbb84", "#e34a33"),
-  phNames = c("Shrinkage", "Expansion", "Increment"),
-  cex = NULL,
-  cex.axis = NULL,
-  cex.legend = NULL,
-  font.axis = NULL,
-  col.axis = NULL,
-  ...
-)
+phase.sc(df, TreeNum, smoothing = NULL)
 }
 \arguments{
 \item{df}{dataframe with first column containing date and time in the format \code{yyyy-mm-dd HH:MM:SS}. It should contain data with constant temporal resolution for best results.}
@@ -26,26 +12,6 @@ phase.sc(
 \item{TreeNum}{numerical value indicating the tree to be analysed. E.g. '1' refers to the first dendrometer data column in \emph{df}.}
 
 \item{smoothing}{numerical value from 1 to 12 which indicates the length of the smoothing spline, i.e. 1 = 1 hour and 12 = 12 hours. Default is \code{NULL} for no smoothing.The function \code{\link[pspline:smooth.Pspline]{smooth.Pspline}} is used for smoothing the data.}
-
-\item{outputplot}{logical, to \code{plot} the phase diagram.}
-
-\item{days}{array with initial and final day for plotting. E.g. \emph{c(a,b)}, where a = initial date and b = final date.}
-
-\item{cols}{array with three elements representing colors for shrinking, expanding and increasing phases respectively.}
-
-\item{phNames}{array with three elements for three different phases. Default is \strong{"Shrinkage", "Expansion" and "Increment"}.}
-
-\item{cex}{numeric, for the size of the points. Default is \code{NULL}.}
-
-\item{cex.axis}{numeric, for the size of the axis tick labels. Default is \code{NULL}.}
-
-\item{cex.legend}{numeric, for the size of the legend labels. Default is \code{NULL}.}
-
-\item{font.axis}{numeric, for the font type of the axis tick labels. Default is \code{NULL}.}
-
-\item{col.axis}{color names, for the color of the axis tick labels. Default is \code{NULL}.}
-
-\item{...}{other graphical parameters.}
 }
 \value{
 A list of two dataframes. The first dataframe \emph{SC_cycle} with cyclic phases along with various statistics and the second dataframe \emph{SC_phase} with assigned phases for each data point.The dataframe \emph{SC_cycle} contains the beginning, end, duration, magnitude and rate of each phase. The dataframe \emph{SC_phase} contains time and corresponding phases during that time.
@@ -66,11 +32,11 @@ The contents of \emph{SC_cycle} are:
 This function analyses the dendrometer data using Stem-cycle approach (Downs et al. 1999; Deslauriers et al. 2011). A function that defines three phases: 1) Shrinkage, when the dendrometer reading is less than previous reading, 2) Expansion, when current reading is more than previous reading and 3) Increment, when current reading is higher than the previous maximum. Additionally, it calculates various statistics for each phase.
 }
 \examples{
-library(dendRoAnalyst)
+\donttest{library(dendRoAnalyst)
 data(gf_nepa17)
-sc.phase<-phase.sc(df=gf_nepa17, TreeNum=1, smoothing=12, outputplot=TRUE, days=c(150,160))
+sc.phase<-phase.sc(df=gf_nepa17, TreeNum=1, smoothing=12)
 head(sc.phase[[1]],10)
-head(sc.phase[[2]],10)
+head(sc.phase[[2]],10)}
 
 }
 \references{

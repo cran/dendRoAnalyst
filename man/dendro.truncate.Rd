@@ -20,10 +20,10 @@ A dataframe with the truncated data for the defined periods.
 This function is helpful to truncate dendrometer data for a user-defined period.
 }
 \examples{
-library(dendRoAnalyst)
+\donttest{library(dendRoAnalyst)
 data(nepa)
 #Extracting data from doy 20 to 50 in 2017.
 trunc1<-dendro.truncate(df=nepa, CalYear=2017, DOY=c(20,50))
-head(trunc1,10)
+head(trunc1,10)}
 
 }

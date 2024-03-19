@@ -10,99 +10,94 @@
 #'
 #' @return A dataframe with \code{NA} values replaced by interpolated data.
 #'
-#' @examples library(dendRoAnalyst)
+#' @importFrom stats lm
+#' @importFrom lubridate ymd_hms ymd
+#' @importFrom dplyr mutate filter group_by summarise ungroup %>% rename across select where case_when
+#' @importFrom tibble as_tibble tibble
+#' @importFrom ggplot2 ggplot geom_area geom_rect geom_text aes theme_minimal labs geom_line geom_point facet_wrap theme element_text
+#' @importFrom tidyr pivot_longer
+#'
+#' @examples
+#' \donttest{library(dendRoAnalyst)
 #' data("gf_nepa17")
 #' df1<-gf_nepa17
 #' # Creating an artificial reference dataset.
 #' df2<-cbind(gf_nepa17,gf_nepa17[,2:3],gf_nepa17[,2:3])
+#' colnames(df2) <- c('Time','T1','T2','T3','T4','T5','T6')
 #' # Creating gaps in dataset by replacing some of the reading with NA in dataset.
 #' df1[40:50,3]<-NA
 #' # Using proportional interpolation method.
 #' df1_NI<-network.interpolation(df=df1, referenceDF=df2, niMethod='proportional')
-#' head(df1_NI,10)
-#'
-#' @importFrom stats approx median na.exclude na.omit sd lm
-#'
-#' @importFrom boot boot boot.ci
+#' head(df1_NI,10)}
 #'
 #' @export
-network.interpolation<-function(df,referenceDF,niMethod){
-  #temp1 <- data.frame(timestamp = as.POSIXct(strptime(df[,1],format = "%Y-%m-%d %H:%M:%S")))
-  #if (is.na(as.POSIXct(temp1$timestamp[1], format = "%Y-%m-%d %H:%M:%S"))) {
-    #stop("Date not in the right format")
-  #}
-  df1<-df
-  #df1[,1]=temp1
-  df2<-referenceDF
-  meth<-niMethod
-  cd<-2:ncol(df1)
-  for(i in cd){
-    if(length(which(is.na(df1[,i])))==0){
-      next
+network.interpolation<-function(df, referenceDF, niMethod){
+  ################################################
+  bootstrap_mean <- function(data, n_bootstrap) {
+    bootstrap_means <- numeric(n_bootstrap)
+    for (i in 1:n_bootstrap) {
+      bootstrap_sample <- sample(data, size = length(data), replace = TRUE)
+      bootstrap_means[i] <- mean(bootstrap_sample)
+    }
+    original_mean <- mean(data)
+    bootstrap_se <- sd(bootstrap_means)
+    return(list(bootstrap_mean = mean(bootstrap_means), bootstrap_se = bootstrap_se))
+}
+  ################################################
+  if(!(niMethod%in%c('proportional','linear'))){
+    stop("The 'niMethod' must be either 'proportional' or 'linear'")
+  }
+  if (!inherits(df[[1]], 'Date') && !inherits(df[[1]], 'POSIXct')) {
+    df[[1]] <- ymd_hms(df[[1]])
+  }
+  if (!inherits(referenceDF[[1]], 'Date') && !inherits(referenceDF[[1]], 'POSIXct')) {
+    referenceDF[[1]] <- ymd_hms(referenceDF[[1]])
+  }
+  TIME <- NULL
+  #referenceDF[,1]<-as_datetime(referenceDF[,1])
+  df<- tibble(df)%>%
+    rename(TIME = 1)
+  df_r<-tibble(referenceDF)%>%
+    rename(TIME = 1)
+  ctime <- intersect(df$TIME,df_r$TIME)
+  if(length(ctime)==0){
+    stop("'df' and 'referenceDF' must have time overlap.")
+  }else{
+    if((length(ctime)==nrow(df)) & (length(ctime)==nrow(df_r))){
+      df<-df
+      df_r<-df_r
     }else{
-      f.loc<-which(is.na(df1[,i]))
-      r.sq<-c()
-      tm<-c()
-      inp.v<-c()
-      ul<-c()
-      ll<-c()
-      for(j in f.loc){
-        ref.j<-c(t(df2[j,2:ncol(df2)]))
-        ref.pj<-c(t(df2[(j-1),2:ncol(df2)]))
-        ref.pj[ref.pj==0]<-0.001
-        if(meth=='linear'){
-          xy<-function(df,i){
-            df2<-df[i,]
-            lml<-lm(df2)
-            d<-c(summary(lml)$adj.r.squared,lml$coefficients[2], lml$coefficients[1])
-            return(d)
-          }
-          lmc<-function(x){
-            A1<-boot::boot(data.frame(ref.pj,ref.j),statistic =xy,R=500)
-            return(A1$t0)
-          }
-          A2<-lmc(data.frame(ref.pj,ref.j))
-          #A1<-boot::boot(data.frame(ref.pj,ref.j),statistic =xy,R=500)
-          r.sq<-c(r.sq,A2[1])
-          df1[j,i]<-df1[(j-1),i]*A2[2]+A2[3]
-          tm<-c(tm,df1[j,1])
-          inp.v<-c(inp.v,df1[j,i])
+      warning("The temporal coverage of 'df' and 'referenceDF' is not same. The output data will be shortened to the common time period.")
+      common_t<-as.POSIXct(ctime, origin='1970-01-01', tz='UTC')
+      df<-df%>%filter(TIME%in%common_t)
+      df_r<-df_r%>%filter(TIME%in%common_t)
+    }
 
+  }
+  #print(df)
+  filled <- sapply(df[-1], function(cl){
+    if(length(which(is.na(cl)))==0){
+      return(cl)
+    }else{
+      na.loc<-which(is.na(cl))
+      for(i in na.loc){
+        a_p <- ifelse(cl[i-1]==0,0.001,cl[i-1])
+        b_p <- unlist(df_r[-1]%>%slice(i-1))
+        b <- unlist(df_r[-1]%>%slice(i))
+        if(niMethod=='proportional'){
+          percent_ch<-(b-b_p)/b_p
+          bp<-bootstrap_mean(percent_ch, n_bootstrap = 500)
+          cl[i] <- a_p+a_p*bp[[1]]
         }else{
-          if(meth=='proportional'){
-            fc <- function(d, i){
-              d2 <- d[i]
-              return(mean(d2, na.rm = T))
-            }
-            mnc<-function(data){
-              A<-boot::boot(p_ref.d,statistic = fc,R=500)
-              B<-boot::boot.ci(A, conf=0.95, type="bca")
-              return(c(A$t0, B$bca[4], B$bca[5]))
-            }
-            ref.d<-as.numeric((ref.j-ref.pj)/ref.pj)
-            p_ref.d<-df1[(j-1),i]+(df1[(j-1),i]*ref.d)
-            #A<-boot::boot(p_ref.d,statistic = fc,R=500)
-            #B<-boot::boot.ci(A, conf=0.95, type="bca")
-            st=mnc(p_ref.d)
-            #print(mean(ref.d))
-            df1[j,i]<-mean(st[1], na.rm=T)
-            tm<-c(tm,df1[j,1])
-            inp.v<-c(inp.v,df1[j,i])
-            ul<-c(ul, st[3])
-            ll<-c(ll, st[2])
-          }else{
-            stop("Invalid niMethod provided. Please choose either 'linear' or 'proportional'.")
-          }
-
+          lm1<-lm(b~b_p)
+          #d<-c(lml$coefficients[2], lml$coefficients[1])
+          cl[i] <- a_p*lm1$coefficients[2]+lm1$coefficients[1]
+          #print(cl[i])
         }
       }
-      print(paste('Interpolation in', colnames(df1)[i]))
-      if(meth=='proportional'){
-        print(data.frame('Time'=tm, 'Interpolated_value'=inp.v, 'LCI95'=ll, 'UCI95'=ul))
-      }else{
-        print(data.frame('Time'=tm,  'Interpolated_value'=inp.v, 'rsquared'=r.sq))
-      }
+      return(cl)
     }
-  }
-  return(df1)
+  })
+  df <- bind_cols(df[1],filled)
+  return(df)
 }

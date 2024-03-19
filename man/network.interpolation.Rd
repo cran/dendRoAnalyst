@@ -20,15 +20,16 @@ A dataframe with \code{NA} values replaced by interpolated data.
 A function to interpolate the missing data of a dendrometer with the help of other dendrometers from the same site, provided they have the same measurement period and temporal resolution.
 }
 \examples{
-library(dendRoAnalyst)
+\donttest{library(dendRoAnalyst)
 data("gf_nepa17")
 df1<-gf_nepa17
 # Creating an artificial reference dataset.
 df2<-cbind(gf_nepa17,gf_nepa17[,2:3],gf_nepa17[,2:3])
+colnames(df2) <- c('Time','T1','T2','T3','T4','T5','T6')
 # Creating gaps in dataset by replacing some of the reading with NA in dataset.
 df1[40:50,3]<-NA
 # Using proportional interpolation method.
 df1_NI<-network.interpolation(df=df1, referenceDF=df2, niMethod='proportional')
-head(df1_NI,10)
+head(df1_NI,10)}
 
 }

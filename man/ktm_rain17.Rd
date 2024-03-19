@@ -7,7 +7,7 @@
 \format{
 A data frame with 365 rows and 2 variables:
 \describe{
-  \item{\code{DOY}}{double Day of year.}
+  \item{\code{TIME}}{Date in YYYY-MM-DD format.}
   \item{\code{rainfall}}{double rainfall in millimeters}
 }
 }

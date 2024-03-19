@@ -8,39 +8,6 @@
 #'
 #' @param TreeNum numerical value indicating the tree to be analysed. E.g. '1' refers to the first dendrometer data column in \emph{df}.
 #'
-#' @param outputplot  logical, to \code{plot} the phase diagram.
-#'
-#' @param days array with initial and final day for plotting. E.g. \emph{c(a,b)}, where a = initial date and b = final date.
-#'
-#' @param linearCol color for the modelled curve.
-#'
-#' @param twdCol color for the TWD curve.
-#'
-#' @param twdFill filling method for the area under the TWD curve. Equivalent to \code{density} argument of the \code{\link[graphics:polygon]{polygon}} function in the \pkg{graphics} package of R. Default value is \code{NULL}.
-#'
-#' @param twdFillCol color to fill the area under the TWD curve.
-#'
-#' @param xlab string, x label of the \code{plot}.
-#'
-#' @param ylab1 string, y label of the upper \code{plot}.
-#'
-#' @param ylab2 string, y label of the lower \code{plot}.
-#'
-#' @param twdYlim numeric, to define the limit of the y-axis of the lower plot. Default is \code{NULL}, which automatically adjusts the y-axis limit.
-#'
-#' @param cex.lab numeric, for the size of the axis labels. Default is \code{NULL}.
-#'
-#' @param cex.axis numeric, for the size of the axis tick labels. Default is \code{NULL}.
-#'
-#' @param font.lab numeric, for the font type of the axis labels. Default is \code{NULL}.
-#'
-#' @param font.axis numeric, for the font type of the axis tick labels. Default is \code{NULL}.
-#'
-#' @param col.axis color names, for the color of the axis tick labels. Default is \code{NULL}.
-#'
-#' @param col.lab color names, for the color of the axis labels. Default is \code{NULL}.
-#'
-#'
 #' @return A list of two dataframes. The first dataframe \emph{ZG_cycle} contains the cyclic phases along with various statistics and the second dataframe \emph{ZG_phase} with assigned phases for each data point.The contents of \emph{ZG_cycle} are:
 #' \tabular{llll}{
 #' \strong{Columns}\tab\tab   \strong{Description}\cr
@@ -58,267 +25,111 @@
 #' \code{STD.twd}\tab\tab	Standard deviation of TWD values for each TWD phase.
 #' }
 #'
-#'@description The severity value of each TWD was introduced in version 0.1.4 of the package. This value is calculated as product of angle of depression of the TWD period and its duration in days.
+#'@description The severity value of each TWD was introduced in version 0.1.4 of the package.
 #'
-#' @examples library(dendRoAnalyst)
+#' @importFrom lubridate ymd_hms ymd
+#' @importFrom dplyr mutate filter group_by summarise ungroup %>% rename across select where case_when
+#' @importFrom tibble as_tibble tibble
+#' @importFrom tidyr pivot_longer
+#'
+#' @examples
+#' \donttest{library(dendRoAnalyst)
 #' data(gf_nepa17)
-#' zg.phase<-phase.zg(df=gf_nepa17[1:600,], TreeNum=1, outputplot=TRUE, days=c(2,6))
+#' zg.phase<-phase.zg(df=gf_nepa17[1:600,], TreeNum=1)
 #' head(zg.phase[[1]],10)
-#' head(zg.phase[[2]],10)
-#'
-#' @importFrom grDevices rgb
-#'
-#' @importFrom graphics abline axis axis.POSIXct box legend lines mtext par points polygon rect text plot
+#' head(zg.phase[[2]],10)}
 #'
 #' @importFrom stats approx median na.exclude na.omit sd
 #'
 #' @export
-phase.zg<-function (df, TreeNum, outputplot, days, linearCol = "#2c7fb8",
-                     twdCol = "#636363", twdFill = NULL, twdFillCol = "#f03b20",
-                     xlab = "DOY", ylab1 = "Stem size variation [mm]", ylab2 = "TWD [mm]",
-                     twdYlim = NULL, cex.axis = NULL, cex.lab = NULL, font.lab = NULL,
-                     col.lab = NULL, font.axis = NULL, col.axis = NULL)
-{
-  temp13 <- df
-  dm <- TreeNum + 1
-  data <- temp13[, c(1, dm)]
-  dm <- 2
-  a <- NULL
-  b <- NULL
-  temp<-data.frame(timestamp=as.POSIXct(data[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC'))
-  if(unique(is.na(as.POSIXct(temp$timestamp, format = '%Y-%m-%d %H:%M:%S', tz='UTC')))){
-    stop('Date not in the right format')
+phase.zg<-function (df, TreeNum){
+  ############################################################################
+  Duration_h <- NULL
+  phase_cal_zg <- function(y){
+    all_max <- cummax(y)
+    phases<- vector('integer', length(y))
+    phases[all_max-y==0] <- 2
+    phases[all_max>y] <-1
+    return(phases)
   }
-  data$doy <- as.integer(format(as.POSIXct(temp[,1], format = "%Y-%m-%d %H:%M:%S"),
-                                "%j"))
-  data$yr <- as.integer(format(as.POSIXct(temp[,1], format = "%Y-%m-%d %H:%M:%S"),
-                               "%y"))
-  y1 <- unique(data$yr)
-  if (length(y1) > 1) {
-    data$doy2 <- data$doy
-    d <- max(which(data$doy == ifelse(y1[1]%%4 == 0, 366,
-                                      365)))
-    data$doy2[(d + 1):nrow(data)] <- data$doy2[(d + 1):nrow(data)] +
-      data$doy2[d]
+  normalize <- function(x) {
+    return ((x - min(x,na.rm=T)) / (max(x,na.rm=T) - min(x,na.rm=T)))
   }
-  reso_den <- function(input_time) {
-    time1 <- input_time
-    reference <- time1[1]
-    time_min <- as.integer(difftime(time1, reference, units = "mins"))
-    diff_time <- diff(time_min)
-    diff2_time <- unique(diff_time)
-    reso <- mean(diff2_time)
-    if (isTRUE(length(diff2_time > 1)) == T) {
-      print(diff2_time)
-      warning("Warning: The temporal resolution of dendrometer data is not consistent, For better result, please use dendrometer data with consistent resolution. There may be NA values in the dataset.")
-    }
-    else {
-      reso <- mean(diff2_time)
-      return(round(reso))
-    }
+  phase_sats_zg<-function(dm_data, y){
+    ph_diff<-c(0,diff(y))
+    gro_crv<-cummax(dm_data$dm)
+    twd_crv<-gro_crv-dm_data$dm
+    dy<-yday(c(dm_data$TIME[1], dm_data$TIME[ph_diff!=0]))
+    ph<-c(y[1],y[ph_diff!=0])
+    magn<-c(dm_data$dm[1], dm_data$dm[ph_diff!=0], dm_data$dm[nrow(dm_data)])
+    magn<-diff(magn)
+    magn[ph==1] <- NA
+    strt_t<-c(dm_data$TIME[1], dm_data$TIME[ph_diff!=0])
+    #strt_t<-strt_t[1:length(strt_t)-1]
+    end_t <- c(strt_t[2:length(strt_t)], dm_data$TIME[nrow(dm_data)])
+    dur_h<-as.numeric(difftime(end_t, strt_t), units='hours')
+    st_loc<-c(1, which(ph_diff!=0))
+    end_loc<-c(st_loc[2:length(st_loc)], length(y))
+    max_values <- sapply(1:length(st_loc), function(i) {
+      max(twd_crv[st_loc[i]:end_loc[i]])
+    })
+    max_time <- sapply(1:length(st_loc), function(i) {
+      twd_<-twd_crv[st_loc[i]:end_loc[i]]
+      t<-dm_data$TIME[st_loc[i]:end_loc[i]]
+      last(t[twd_==max(twd_)])
+    })
+    avg_twd <- sapply(1:length(st_loc), function(i) {
+      mean(twd_crv[st_loc[i]:end_loc[i]], na.rm=T)
+    })
+    std_twd <- sapply(1:length(st_loc), function(i) {
+      sd(twd_crv[st_loc[i]:end_loc[i]], na.rm=T)
+    })
+    max_time <- as.POSIXct(max_time, origin = "1970-01-01", tz = "UTC")
+    st_max_diff<-as.numeric(difftime(max_time,strt_t, units = 'hours'))
+    st_max_diff[ph==2]<-NA
+    st_max_diff_norm<-normalize(st_max_diff)
+    end_max_diff<-as.numeric(difftime(end_t,max_time, units = 'hours'))
+    end_max_diff[ph==2]<-NA
+    end_max_diff_norm<-normalize(end_max_diff)
+    max_values[ph==2]<-NA
+    max_values_norm<-normalize(max_values)
+    sev<-0.3*st_max_diff_norm+0.3*end_max_diff_norm+0.4*max_values_norm
+    max_time[ph==2]<-NA
+    avg_twd[ph==2]<-NA
+    std_twd[ph==2]<-NA
+    out <- tibble(
+      'Phases' = ph,
+      'Start' = strt_t,
+      'End' = end_t,
+      'Duration_h' = dur_h,
+      'Magnitude' = magn,
+      'rate' = magn*1000/dur_h,
+      'max.twd' = max_values,
+      'Max.twd.time' = max_time,
+      'twd.severity' = sev,
+      'Avg.twd' = avg_twd,
+      'STD.twd' = std_twd,
+      'DOY' = dy
+    )%>%
+      filter(Duration_h > 0)
+    dm_data <- dm_data %>%
+      mutate('Phases' = y,
+             'TWD' = twd_crv,
+             'GRO' = gro_crv)
+    return(list(out, tibble(dm_data)))
   }
-  r.denro <- reso_den(temp[,1])
-  ap.all <- c(data[, dm][1])
-  for (i in 2:nrow(data)) {
-    if(data[, dm][i] < max(data[,dm][1:i - 1])){
-      ap.all <- c(ap.all,max(data[, dm][1:i - 1]))
-    }else{
-      ap.all <- c(ap.all,data[, dm][i])
-    }
+  #############################################################################
+  if (!inherits(df[[1]], 'Date') && !inherits(df[[1]], 'POSIXct')) {
+    df[[1]] <- ymd_hms(df[[1]])
   }
-  data$twd <- data[, dm] - ap.all
-  data$strght.line <- ap.all
-  zg_ph <- ifelse(data$twd==0, "GRO","TWD")
-  # zg_ph[zg_ph == 2 | zg_ph == 1] <- "TWD"
-  # zg_ph[zg_ph == 3] <- "GRO"
-  data$y <- zg_ph
-  x <- which(data$y == "GRO")
-  dp.3.time <- data[, dm][x]
-  y.3 <- na.exclude(data[, dm][x])
-  ap.all <- c(data[, dm][1])
-  for (i in 2:nrow(data)) {
-    ap.all <- c(ap.all, ifelse(data[, dm][i] < max(data[,
-                                                        dm][1:i - 1]), max(data[, dm][1:i - 1]), data[,
-                                                                                                      dm][i]))
-  }
-  data$twd <- data[, dm] - ap.all
-  data$strght.line <- ap.all
-  gr.ph <- c()
-  doy <- c()
-  magn <- c()
-  for (i in 1:nrow(data)) {
-    if (isTRUE(data$y[i] == data$y[i + 1]) == TRUE & isTRUE((i +
-                                                             1) - i == 1) == TRUE) {
-      next
-    }
-    else {
-      doy <- c(doy, i)
-      gr.ph <- c(gr.ph, data$y[i])
-      magn <- c(magn, data[, dm][i])
-    }
-  }
-  mx.twd1 <- c()
-  avg.twd1 <- c()
-  s.twd1 <- c()
-  md.twd1 <- c()
-  mn.twd1 <- c()
-  d.min1 <- c()
-  d.max1 <- c()
-  for (i in 2:length(x)) {
-    df <- data[x[i - 1]:x[(i)], ]
-    mx.twd1 <- c(mx.twd1, max(df$twd, na.rm = T))
-    mn.twd1 <- c(mn.twd1, min(df$twd, na.rm = T))
-    avg.twd1 <- c(avg.twd1, mean(df$twd, na.rm = T))
-    s.twd1 <- c(s.twd1, sd(df$twd, na.rm = T))
-    md.twd1 <- c(md.twd1, median(df$twd, na.rm = T))
-    t.mn <- subset(df, df$twd == min(df$twd, na.rm = T))
-    d.min1 <- c(d.min1, as.POSIXct(t.mn[1, 1], format = "%Y-%m-%d %H:%M:%S"))
-    t.mx <- subset(df, df$twd == max(df$twd, na.rm = T))
-    d.max1 <- c(d.max1, as.POSIXct(t.mx[1, 1], format = "%Y-%m-%d %H:%M:%S"))
-  }
-  df2 <- data[(x[length(x)] + 1):nrow(data), ]
-  mx.twd <- c(mx.twd1, max(df2$twd, na.rm = T))
-  mn.twd <- c(mn.twd1, min(df2$twd, na.rm = T))
-  avg.twd <- c(avg.twd1, mean(df2$twd, na.rm = T))
-  s.twd <- c(s.twd1, sd(df2$twd, na.rm = T))
-  md.twd <- c(md.twd1, median(df2$twd, na.rm = T))
-  t.mn <- subset(df2, df2$twd == min(df2$twd, na.rm = T))
-  d.min <- c(d.min1, as.POSIXct(t.mn[1, 1], format = "%Y-%m-%d %H:%M:%S"))
-  t.mx <- subset(df2, df2$twd == max(df2$twd, na.rm = T))
-  d.max <- c(d.max1, as.POSIXct(t.mx[1, 1], format = "%Y-%m-%d %H:%M:%S"))
-  xyz <- data.frame(d.max, mx.twd, d.min, mn.twd, avg.twd,
-                    s.twd, md.twd)
-  s <- subset(xyz, xyz$mn.twd != 0)
-  abc <- data.frame(doy)
-  strt_time <- as.POSIXct(data[1, 1], format = "%Y-%m-%d %H:%M:%S")
-  for (i in 1:nrow(abc)) {
-    strt_time <- c(strt_time,as.POSIXct(data[, 1][abc$doy[i]], format = "%Y-%m-%d %H:%M:%S"))
-  }
-
-
-  abc$doy <- NULL
-  abc$DOY <- as.integer(format(as.POSIXct(strt_time, format = "%Y-%m-%d %H:%M:%S"),
-                               "%j"))[1:nrow(abc)]
-  abc$Phases <- gr.ph
-  abc <- na.omit(abc)
-  abc$start <- strt_time[1:length(strt_time) - 1]
-  abc$end <- strt_time[2:(length(strt_time))]
-  abc$Duration_h <- round(as.numeric(difftime(as.POSIXct(abc$end,
-                                                         format = "%Y-%m-%d %H:%M:%S"), as.POSIXct(abc$start, format = "%Y-%m-%d %H:%M:%S"),
-                                              units = "hours")), 2)
-
-  abc$magnitude <- as.numeric(round(diff(c(data[, dm][1],magn)), 8))
-  abc$rate <- (abc$magnitude/abc$Duration_h) * 1000
-  data$tm <- data[, 1]
-  twd12 <- data$twd
-  tp <- abc$start[abc$Phases == "TWD"]
-  ep <- abc$end[abc$Phases == "TWD"]
-  twd.loc <- which(abc$Phases == "TWD")
-  max.t <- c()
-  max.tm <- c()
-  mn.t <- c()
-  sd.t <- c()
-  for (q in 1:length(tp)) {
-    r <- as.numeric(which(data$tm == tp[q]))
-    t <- as.numeric(which(data$tm == ep[q]))
-    f <- data[r:t, ]
-    max.t <- c(max.t, min(f$twd))
-    d <- which(f$twd == min(f$twd))
-    max.tm <- c(max.tm, format(as.POSIXct(f[, 1][d[length(d)]], format = "%Y-%m-%d %H:%M:%S", tz='UTC')))
-    mn.t <- c(mn.t, mean(f$twd, na.rm = T))
-    sd.t <- c(sd.t, sd(f$twd, na.rm = T))
-  }
-  abc$Max.twd <- NA
-  abc$Max.twd[twd.loc] <- -max.t
-  abc$twd.severity<-NA
-  abc$twd.severity[twd.loc]<-atan(abc$Max.twd[twd.loc]/(abc$Duration_h[twd.loc]/24))*(180/pi)*(abc$Duration_h[twd.loc]/24)
-  abc$Max.twd.time <- NA
-  abc$Max.twd.time[twd.loc] <- max.tm#as.POSIXct(max.tm, format = "%Y-%m-%d %H:%M:%S",tz='UTC')
-  abc$Avg.twd <- NA
-  abc$Avg.twd[twd.loc] <- -mn.t
-  abc$STD.twd <- NA
-  abc$STD.twd[twd.loc] <- sd.t
-  abc$rate[abc$Phases == "TWD"] <- NA
-  abc$magnitude[abc$Phases == "TWD"] <- NA
-  if (outputplot == TRUE) {
-    if (days[2] > days[1]) {
-      a1 <- as.numeric(which(data$doy == days[1] & data$yr ==
-                               y1[1]))
-      b1 <- as.numeric(which(data$doy == days[2] & data$yr ==
-                               y1[1]))
-    }
-    else {
-      if (length(y1) <= 1 | length(y1) >= 3) {
-        warning("WARNING: days[1] > days[2] not valid in this case. The plot is not possible.")
-      }
-      else {
-        a1 <- as.numeric(which(data$doy == days[1] &
-                                 data$yr == y1[1]))
-        b1 <- as.numeric(which(data$doy2 == (days[2] +
-                                               data$doy[d]) & data$yr == y1[2]))
-      }
-    }
-    a1_mn <- min(a1)
-    b1_mx <- max(b1)
-    c1 <- days[2] - days[1]
-    data2 <- data[a1_mn:b1_mx, ]
-    xloc <- seq(a1_mn, b1_mx, (1440/r.denro))
-    xloc2 <- c()
-    xloc4 <- c()
-    for (i in 1:length(xloc)) {
-      xloc2 <- c(xloc2, data$doy[xloc[i]])
-      xloc4 <- c(xloc4, data$yr[xloc[i]])
-    }
-    tw.mn <- ifelse(is.null(twdYlim), min(data2$twd, na.rm = T),
-                    twdYlim)
-    opar <- par(no.readonly = TRUE)
-    on.exit(par(opar))
-    par(mfrow = c(2, 1))
-    par(mar = c(0, 4.1, 5, 4.1), xpd = F)
-    plot(x = row.names(data2), y = data2[, dm], type = "l",
-         col = "grey25", xlab = "", ylab = ylab1, xaxt = "none",
-         cex.lab = ifelse(is.null(cex.lab), 1, cex.lab),
-         cex.axis = ifelse(is.null(cex.axis), 1, cex.axis),
-         font.axis = ifelse(is.null(font.axis), 1, font.axis),
-         col.axis = ifelse(is.null(col.axis), "black", col.axis),
-         font.lab = ifelse(is.null(font.lab), 1, font.lab),
-         col.lab = ifelse(is.null(col.lab), "black", col.lab))
-    lines(row.names(data2), data2$strght.line, col = linearCol,
-          lwd = 1.25)
-    axis(3, at = xloc, xloc2, las = 3, cex.axis = ifelse(is.null(cex.axis),
-                                                         1, cex.axis), font.axis = ifelse(is.null(font.axis),
-                                                                                          1, font.axis), col.axis = ifelse(is.null(col.axis),
-                                                                                                                           "black", col.axis))
-    par(mar = c(5.1, 4.1, 0, 4.1))
-    plot(x = row.names(data2), y = data2$twd, col = "red",
-         type = "n", ylab = "", xlab = xlab, yaxt = "n",
-         xaxt = "n", ylim = c(tw.mn, 0), cex.lab = ifelse(is.null(cex.lab),
-                                                          1, cex.lab), cex.axis = ifelse(is.null(cex.axis),
-                                                                                         1, cex.axis), font.axis = ifelse(is.null(font.axis),
-                                                                                                                          1, font.axis), col.axis = ifelse(is.null(col.axis),
-                                                                                                                                                           "black", col.axis), font.lab = ifelse(is.null(font.lab),
-                                                                                                                                                                                                 1, font.lab), col.lab = ifelse(is.null(col.lab),
-                                                                                                                                                                                                                                "black", col.lab))
-    polygon(c(row.names(data2)[1], row.names(data2), row.names(data2)[length(row.names(data2))]),
-            c(0, data2$twd, 0), col = twdFillCol, border = twdCol,
-            density = twdFill)
-    lines(row.names(data2), data2$twd)
-    abline(h = 0, col = "blue", lwd = 1)
-    axis(4, at = seq(0, tw.mn, (tw.mn * 0.25)), round(seq(0,
-                                                          -tw.mn, -tw.mn * 0.25), 2), las = 3, cex.axis = ifelse(is.null(cex.axis),
-                                                                                                                 1, cex.axis), font.axis = ifelse(is.null(font.axis),
-                                                                                                                                                  1, font.axis), col.axis = ifelse(is.null(col.axis),
-                                                                                                                                                                                   "black", col.axis))
-    axis(1, at = xloc, xloc2, las = 3, cex.axis = ifelse(is.null(cex.axis),
-                                                         1, cex.axis), font.axis = ifelse(is.null(font.axis),
-                                                                                          1, font.axis), col.axis = ifelse(is.null(col.axis),
-                                                                                                                           "black", col.axis))
-    mtext(ylab2, side = 4, line = 2.5, cex = ifelse(is.null(cex.lab),
-                                                    1, cex.lab), font = ifelse(is.null(font.lab), 1,
-                                                                               font.lab), col = ifelse(is.null(col.lab), "black",
-                                                                                                       col.lab))
-    box()
-  }
-  data3 <- data.frame(Time = data[, 1], Phases = data$y, TWD = -data$twd)
-  return(list(ZG_cycle = abc, ZG_phase = data3))
+  dm_data <- df%>%
+    select(c(1,TreeNum+1))%>%
+    rename(TIME = 1,
+           dm = 2)
+  #colnames(dm_data) <- c('Time', 'dm')
+  y<-phase_cal_zg(dm_data$dm)
+  ot<-phase_sats_zg(dm_data, y)
+  out<-list(ZG_cycle = ot[[1]], ZG_phase = ot[[2]])
+  class(out) <- "ZG_output"
+  return(out)
 }

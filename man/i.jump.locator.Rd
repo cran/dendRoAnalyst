@@ -19,10 +19,3 @@ A dataframe containing jump-free dendrometer data.
 \description{
 Dendrometers generally have limited memory capacity beyond which it stops recording. To keep the measurement ongoing, they should be adjusted periodically, which can cause positive or negative jumps in the data. This function locates these artefacts and interactively adjusts them one by one.
 }
-\examples{
-library(dendRoAnalyst)
-data(nepa)
-jump_free_nepa<-i.jump.locator(df=nepa, TreeNum=1 ,v=1)
-head(jump_free_nepa,10)
-
-}

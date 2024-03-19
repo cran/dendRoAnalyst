@@ -10,304 +10,55 @@
 #'
 #' @return Dataframe with resampled data.
 #'
-#' @examples library(dendRoAnalyst)
+#' @examples
+#' \donttest{library(dendRoAnalyst)
 #' data(nepa17)
 #' # To resample monthly with maximum value
-#' resample_M<-dendro.resample(df=gf_nepa17[,1:2], by='M', value='max')
-#' head(resample_M,10)
+#' resample_M<-dendro.resample(df=gf_nepa17, by='M', value='max')
+#' head(resample_M,10)}
 #'
 #' @importFrom stats approx median na.exclude na.omit sd
+#' @importFrom lubridate ymd_hms ymd
+#' @importFrom dplyr mutate filter group_by summarise ungroup %>% rename across select where case_when everything
+#' @importFrom tibble as_tibble tibble
+#' @importFrom ggplot2 ggplot geom_area geom_rect geom_text aes theme_minimal labs geom_line geom_point facet_wrap theme element_text
+#' @importFrom tidyr pivot_longer
 #'
 #'
 #' @export
-dendro.resample<-function(df, by, value){
-  data<-df
-  if(ncol(data)<3){
-    data[,3]=data[,2]
+dendro.resample <- function(df, by, value) {
+  TIME <- period <- NULL
+  # Convert timestamp to POSIXct if not already
+  # Convert the first column to datetime if not already
+  if (!inherits(df[[1]], 'Date') && !inherits(df[[1]], 'POSIXct')) {
+    df[[1]] <- ymd_hms(df[[1]])
   }
-  yr<-NULL
-  da<-NULL
-  wk<-NULL
-  mn<-NULL
-  temp1<-data.frame(timestamp=as.POSIXct(data[,1], format = '%Y-%m-%d %H:%M:%S', tz='UTC'))
-  if(unique(is.na(as.POSIXct(temp1$timestamp, format = '%Y-%m-%d %H:%M:%S')))){
-    stop('Date not in the right format')
-  }
-  temp1[,2:ncol(data)]<-data[,2:ncol(data)]
-  temp1$yr<-as.numeric(format(temp1$timestamp, '%Y'))
-  temp1$mn<-as.numeric(format(temp1$timestamp, '%m'))
-  temp1$wk<-as.numeric(format(temp1$timestamp, '%W'))
-  temp1$wk[temp1$wk==0]<-as.numeric(1)
-  temp1$da<-as.numeric(format(temp1$timestamp, '%j'))
-  temp1$hr<-as.numeric(format(temp1$timestamp, '%H'))
-  temp1$ymd<-as.character(format(temp1$timestamp, '%Y-%m-%d'))
-  yr1<-unique(temp1$yr)
-  if(by%in%c('D','W','M', 'H')==FALSE){
-    stop("You must provide arguement 'by' with either 'H' for Hourly, 'D' for Daily,'W' for weekly or 'M' for monthly")
-  }
-  if(value%in%c('max','min','mean','sum')==FALSE){
-    stop("You must provide arguement 'value' with either 'max' for maximum,'min' for minimum, 'mean' for mean or 'sum' for sum.")
-  }
+  df <- as_tibble(df)%>%
+    rename(TIME = 1)
+  # Determine the grouping variable based on 'by'
+  period_col <- case_when(
+    by == 'D' ~ as.Date(df$TIME),
+    by == 'W' ~ floor_date(df$TIME, "week"),
+    by == 'M' ~ floor_date(df$TIME, "month"),
+    by == 'H' ~ df$TIME - minutes(minute(df$TIME)) - seconds(second(df$TIME)),
+    TRUE ~ as.Date(df$TIME) # Fallback to daily if 'by' is unrecognized
+  )
 
-  DOY1<-c()
-  time1<-c()
-  resamp1<-c()
-  for(year in yr1){
-    year1<-subset(temp1, yr==year)
-    DOY<-c()
-    time<-c()
-    a<-c()
-    #By daily basis
-    if(by=='D'){
-      x<-matrix(ncol=ncol(data)-1)
-      if(value=='max'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          time<-c(time,format(day$timestamp[1], '%Y-%m-%d'))
-          #DOY<-c(DOY,i)
-          a1<-apply(day[,2:ncol(data)], 2, max, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='min'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          time<-c(time,format(day$timestamp[1], '%Y-%m-%d'))
-          #DOY<-c(DOY,i)
-          a1<-apply(day[,2:ncol(data)], 2, min, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='mean'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          time<-c(time,format(day$timestamp[1], '%Y-%m-%d'))
-          #DOY<-c(DOY,i)
-          a1<-apply(day[,2:ncol(data)], 2, mean, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='sum'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          time<-c(time,format(day$timestamp[1], '%Y-%m-%d'))
-          #DOY<-c(DOY,i)
-          a1<-apply(day[,2:ncol(data)], 2, sum, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
+  # Create a new dataframe with the period column and the timestamp
+  data <- df %>%
+    mutate(period = period_col) %>%
+    select(-TIME, everything()) # Move timestamp to the end if needed
 
-    }
-    #############################################################
-    ####################################################################
-    ####################################################################
+  # List of circumference columns, assuming all except 'period'
+  circ_columns <- setdiff(names(df[-1]), "TIME")
 
-
-    # By weekly basis
-    if(by=='W'){
-      w<-c()
-      x<-matrix(ncol=ncol(data)-1)
-      if(value=='max'){
-        for(i in min(year1$wk):max(year1$wk)){
-          week<-subset(year1, wk==i)
-          time<-c(time,format(week$timestamp[1], '%Y-%m-%d'))
-          #w<-c(w,i)
-          a1<-apply(week[,2:ncol(data)], 2, max, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='min'){
-        for(i in min(year1$wk):max(year1$wk)){
-          week<-subset(year1, wk==i)
-          time<-c(time,format(week$timestamp[1], '%Y-%m-%d'))
-          #w<-c(w,i)
-          a1<-apply(week[,2:ncol(data)], 2, min, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='mean'){
-        for(i in min(year1$wk):max(year1$wk)){
-          week<-subset(year1, wk==i)
-          time<-c(time,format(week$timestamp[1], '%Y-%m-%d'))
-          #w<-c(w,i)
-          a1<-apply(week[,2:ncol(data)], 2, mean, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='sum'){
-        for(i in min(year1$wk):max(year1$wk)){
-          week<-subset(year1, wk==i)
-          time<-c(time,format(week$timestamp[1], '%Y-%m-%d'))
-          #w<-c(w,i)
-          a1<-apply(week[,2:ncol(data)], 2, sum, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-
-    }
-
-    ############################################################################
-    ###############################################################################
-    ###############################################################################
-    if(by=='M'){
-      m<-c()
-      x<-matrix(ncol=ncol(data)-1)
-      if(value=='max'){
-        for(i in min(year1$mn):max(year1$mn)){
-          month<-subset(year1, mn==i)
-          time<-c(time,format(month$timestamp[1], '%Y-%m-%d'))
-          #m<-c(m,i)
-          a1<-apply(month[,2:ncol(data)], 2, max, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='min'){
-        for(i in min(year1$mn):max(year1$mn)){
-          month<-subset(year1, mn==i)
-          time<-c(time,format(month$timestamp[1], '%Y-%m-%d'))
-          #m<-c(m,i)
-          a1<-apply(month[,2:ncol(data)], 2, min, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='mean'){
-        for(i in min(year1$mn):max(year1$mn)){
-          month<-subset(year1, mn==i)
-          time<-c(time,format(month$timestamp[1], '%Y-%m-%d'))
-          #m<-c(m,i)
-          a1<-apply(month[,2:ncol(data)], 2, mean, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='sum'){
-        for(i in min(year1$mn):max(year1$mn)){
-          month<-subset(year1, mn==i)
-          time<-c(time,format(month$timestamp[1], '%Y-%m-%d'))
-          #m<-c(m,i)
-          a1<-apply(month[,2:ncol(data)], 2, sum, na.rm=T)
-          a<-rbind.data.frame(a,a1)
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-
-    }
-    #########################################################
-    ############# Hourly resample ###########################
-    if(by=='H'){
-      if(value=='max'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          for(h in unique(day$hr)){
-            hours<-subset(day, day$hr==h)
-            hms<-paste( sprintf("%02d", as.numeric(h)),':00:00', sep = '')
-            ymdhms<-paste(as.character(hours$ymd[1]),hms, sep =' ')
-            time<-c(time,ymdhms)
-            a1<-apply(hours[,2:ncol(data)], 2, max, na.rm=T)
-            a<-rbind.data.frame(a,a1)
-          }
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='min'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          for(h in unique(day$hr)){
-            hours<-subset(day, day$hr==h)
-            hms<-paste(h,':00:00', sep = '')
-            ymdhms<-paste(hours$ymd[1],hms, sep =' ')
-            time<-c(time,ymdhms)
-            a1<-apply(hours[,2:ncol(data)], 2, min, na.rm=T)
-            a<-rbind.data.frame(a,a1)
-          }
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='mean'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          for(h in unique(day$hr)){
-            hours<-subset(day, day$hr==h)
-            hms<-paste(h,':00:00', sep = '')
-            ymdhms<-paste(hours$ymd[1],hms, sep =' ')
-            time<-c(time,ymdhms)
-            a1<-apply(hours[,2:ncol(data)], 2, mean, na.rm=T)
-            a<-rbind.data.frame(a,a1)
-          }
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-      if(value=='sum'){
-        for(i in min(year1$da):max(year1$da)){
-          day<-subset(year1, da==i)
-          for(h in unique(day$hr)){
-            hours<-subset(day, day$hr==h)
-            hms<-paste(h,':00:00', sep = '')
-            ymdhms<-paste(hours$ymd[1],hms, sep =' ')
-            time<-c(time,ymdhms)
-            a1<-apply(hours[,2:ncol(data)], 2, sum, na.rm=T)
-            a<-rbind.data.frame(a,a1)
-          }
-        }
-        resamp<-data.frame(time,a)
-        names(resamp)<-c('Time',colnames(data[2:ncol(data)]))
-        #return(resamp)
-      }
-
-    }
-
-    #########################################################
-    resamp1<-rbind.data.frame(resamp1,resamp)
-  }
-  rownames(resamp1)<-1:nrow(resamp1)
-  for(i in 2:ncol(resamp1)){
-    loc.inf<-which(resamp1[,i]=='-Inf')
-    resamp1[loc.inf,i]<-NA
-  }
-  if(ncol(df)<3){
-    resamp1=resamp1[,1:2]
-    names(resamp1)<-colnames(df)
-  }
-  resamp1[,1]=as.character(resamp1[,1])
-  return(resamp1)
+  # Apply the chosen summarization function to each circumference column
+  summarization_fun <- match.fun(value)
+  data_summarized <- data %>%
+    group_by(period) %>%
+    summarise(across(all_of(circ_columns), summarization_fun, .names = "{.col}"),
+              .groups = 'drop')
+  df <- data_summarized %>%
+    rename(TIME = 1)
+  return(df)
 }

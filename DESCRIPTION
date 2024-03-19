@@ -1,8 +1,8 @@
 Package: dendRoAnalyst
 Type: Package
-Date: 2022-11-15
+Date: 2024-03-19
 Title: A Tool for Processing and Analyzing Dendrometer Data
-Version: 0.1.4
+Version: 0.1.5
 Authors@R: c(
     person("Sugam", "Aryal", email = "sugam.aryal@fau.de", role = c("aut", "cre", "dtc")),
     person("Martin", "Häusser", email = "martin.haeusser@fau.de", role = "aut"),
@@ -14,17 +14,19 @@ Description: There are various functions for managing and cleaning data before t
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.2
-Depends: R (>= 2.10), boot, pspline, zoo, graphics, grDevices, stats,
-        base
-Suggests: knitr, rmarkdown
+RoxygenNote: 7.3.1
+Depends: R (>= 3.5.0), stats, base, tidyverse
+Imports: dplyr, ggplot2, lubridate, readxl, tibble, tidyr, zoo,
+        forecast, mgcv, minpack.lm, pspline, stringr
+Suggests: knitr, rmarkdown, testthat (>= 3.0.0)
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2022-11-15 08:35:52 UTC; suary
+Packaged: 2024-03-19 16:07:39 UTC; xe40husu
 Author: Sugam Aryal [aut, cre, dtc],
   Martin Häusser [aut],
   Jussi Grießinger [aut],
   Ze-Xin Fan [aut],
   Achim Bräuning [aut, dgs]
 Repository: CRAN
-Date/Publication: 2022-11-16 02:30:02 UTC
+Date/Publication: 2024-03-19 16:20:05 UTC
+Config/testthat/edition: 3

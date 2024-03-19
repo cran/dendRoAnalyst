@@ -255,12 +255,14 @@ during that period.</p>
 </div>
 <div id="data-formatting" class="section level2">
 <h2>Data formatting</h2>
-<p>The package requires a well formatted dataset as a input. The first
+<p>The package requires a well formatted data set as a input. The first
 column must consist of time in extended date-time format
-(e.g. yyyy-mm-dd HH:MM:SS) without daylight savings. The dendrometer
-data for each sensors has to be sorted from the second column onward.
-The package is flexible to column names but is strict with their
-order.</p>
+(e.g. yyyy-mm-dd HH:MM:SS) without daylight savings. From the version
+0.1.5, the package can handle the data set with extended time format in
+first column regardless of their format. However, the first column must
+have datetime from year to second. The dendrometer data for each sensors
+has to be sorted from the second column onward. The package is flexible
+to column names but is strict with their order.</p>
 </div>
 <div id="data-import" class="section level2">
 <h2>Data import</h2>
@@ -268,14 +270,18 @@ order.</p>
 generates time in extended date-time format in one column whereas others
 generate time with different units in different columns. We recommend
 converting the data to comma separated value (.csv) or plain text (.txt)
-format before importing to R.</p>
+format before importing to R. However, package can also read excel file
+from version 0.1.5.</p>
 <div id="importing-dataset-containing-date-time-in-one-column" class="section level3">
 <h3>Importing dataset containing date-time in one column</h3>
 <p>If the dataset looks like in the table 1, one can simply read it
-using either read.csv() or read.table() functions based on the file
-format.</p>
+using “read.dendrometer” functions. The function is able to read CSV,
+TXT and EXCEL files.</p>
 <p><strong>Table 1: Dendrometer data with extended date-time in one
 column</strong></p>
+<pre><code>#&gt; Registered S3 method overwritten by &#39;quantmod&#39;:
+#&gt;   method            from
+#&gt;   as.zoo.data.frame zoo</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -312,10 +318,9 @@ column</strong></p>
 </tr>
 </tbody>
 </table>
-<p>For comma separated value (.csv) format:</p>
-<pre><code>df &lt;- read.csv(&quot;nepa.csv&quot;, header = TRUE)</code></pre>
-<p>For plain text (.txt) format:</p>
-<pre><code>df &lt;- read.table(&quot;nepa.txt&quot;, sep = &quot;\t&quot;, header = TRUE)</code></pre>
+<p>For plain text (.txt), comma separated (.csv) and excel (.xlsx)
+format:</p>
+<pre><code>df &lt;- read.dendrometer(&quot;nepa.txt&quot;)</code></pre>
 </div>
 <div id="importing-a-dataset-with-date-and-time-in-separate-columns" class="section level3">
 <h3>Importing a dataset with date and time in separate columns</h3>

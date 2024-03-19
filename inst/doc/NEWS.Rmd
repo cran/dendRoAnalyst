@@ -1,0 +1,29 @@
+---
+title: "News in latest version of 'dendRoAnalyst' package"
+author: "Sugam Aryal"
+date: "2024-03-07"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{News in latest version of 'dendRoAnalyst' package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+------------------------------------------------------------------------
+
+New to dendRoAnalyst version 0.1.5!
+
+-   This version of package is based on the 'tidyverse'.
+-   The functions are faster compared to previous version.
+-   The 'phase.sc' and 'phase.zg' only calculate the phases and phase statistics.
+-   There are two separate functions added to plot the output of 'phase.sc' and 'phase.zg'.
+-   A new function, 'dm.detrend' has been added to detrend the dendrometer data using 'gam', 'first difference' and 'gompertz' function.
+-   A new function 'dm.fit.gompertz' is introduced to fit Gompertz function. It also provide option to calculate the growth rate applying first derivative of the Gompertz function.
+-   The function 'spline.interpolation' is now 'dm.na.interpolation', with two methods: 'spline' and 'seasonal' interpolation. The seasonal interpolation used ARIMA model to detect the daily pattern for three weeks (the week of gap occurrence + one week earlier and later) and interpolates the missing values.
+-   A new function 'read.dendrometer' is included to read the dendrometer data from TXT, CSV and EXCEL files.
+-   A new function 'mean.detrended.dm' calculates the averaged detrended dendrometer data with possibility getting first order autocorrelation free averaged series.
+-   A new function 'mov.cor.dm' is added for calculating climate-growth relationships.
